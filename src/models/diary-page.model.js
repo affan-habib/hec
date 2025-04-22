@@ -107,5 +107,51 @@ module.exports = (sequelize, DataTypes) => {
     return (result || 0) + 1;
   };
 
+  DiaryPage.getAllByDiaryId = async function(diaryId, limit = null, offset = 0) {
+    const options = {
+      where: { diary_id: diaryId },
+      order: [['page_number', 'ASC']],
+      include: [{
+        model: sequelize.models.Skin,
+        as: 'skin',
+        attributes: ['id', 'name', 'thumbnail', 'css_class']
+      }]
+    };
+
+    // Apply pagination if limit is provided
+    if (limit !== null) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    return await this.findAll(options);
+  };
+
+  DiaryPage.countByDiaryId = async function(diaryId) {
+    return await this.count({
+      where: { diary_id: diaryId }
+    });
+  };
+
+  DiaryPage.findById = async function(id) {
+    return await this.findOne({
+      where: { id },
+      include: [{
+        model: sequelize.models.Skin,
+        as: 'skin',
+        attributes: ['id', 'name', 'thumbnail', 'css_class']
+      }]
+    });
+  };
+
+  DiaryPage.update = async function(id, data) {
+    await this.update(data, { where: { id } });
+    return await this.findById(id);
+  };
+
+  DiaryPage.delete = async function(id) {
+    return await this.destroy({ where: { id } });
+  };
+
   return DiaryPage;
 };

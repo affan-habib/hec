@@ -36,6 +36,8 @@
  *           description: The timestamp when the skin was last updated
  */
 
+const { Op } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   const Skin = sequelize.define('Skin', {
     id: {
@@ -104,6 +106,71 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'skin_id',
       as: 'diaryPages'
     });
+  };
+
+  // Static methods
+  Skin.getAll = async (publicOnly = false, userId = null, limit = null, offset = 0) => {
+    const where = {};
+
+    if (publicOnly) {
+      where.is_public = true;
+    }
+
+    if (userId) {
+      where.created_by = userId;
+    }
+
+    const options = {
+      where,
+      order: [['updated_at', 'DESC']],
+      include: [{
+        model: sequelize.models.User,
+        as: 'creator',
+        attributes: ['id', 'first_name', 'last_name', 'email']
+      }]
+    };
+
+    // Apply pagination if limit is provided
+    if (limit !== null) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    return await Skin.findAll(options);
+  };
+
+  Skin.countAll = async (publicOnly = false, userId = null) => {
+    const where = {};
+
+    if (publicOnly) {
+      where.is_public = true;
+    }
+
+    if (userId) {
+      where.created_by = userId;
+    }
+
+    return await Skin.count({ where });
+  };
+
+  Skin.findById = async (id) => {
+    return await Skin.findOne({
+      where: { id },
+      include: [{
+        model: sequelize.models.User,
+        as: 'creator',
+        attributes: ['id', 'first_name', 'last_name', 'email']
+      }]
+    });
+  };
+
+  Skin.update = async (id, data) => {
+    await Skin.update(data, { where: { id } });
+    return await Skin.findById(id);
+  };
+
+  Skin.delete = async (id) => {
+    return await Skin.destroy({ where: { id } });
   };
 
   return Skin;

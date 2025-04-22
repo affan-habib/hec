@@ -1,4 +1,5 @@
 const Diary = require('../models/diary.model');
+const { getPaginationParams, getPaginationMetadata } = require('../utils/pagination.utils');
 
 /**
  * Create a new diary
@@ -41,13 +42,14 @@ const createDiary = async (req, res) => {
  */
 const getAllDiaries = async (req, res) => {
   try {
-    const { public_only, user_id, limit = 10, offset = 0 } = req.query;
+    const { public_only, user_id } = req.query;
 
     // Convert string parameters to appropriate types
     const publicOnly = public_only === 'true';
     const userId = user_id ? parseInt(user_id) : null;
-    const limitNum = parseInt(limit);
-    const offsetNum = parseInt(offset);
+
+    // Get pagination parameters (null if pagination is disabled)
+    const pagination = getPaginationParams(req.query);
 
     // If not admin and trying to get other user's private diaries, restrict to public only
     let effectivePublicOnly = publicOnly;
@@ -62,15 +64,23 @@ const getAllDiaries = async (req, res) => {
       effectiveUserId = req.user.id;
     }
 
-    const diaries = await Diary.getAll(effectivePublicOnly, effectiveUserId, limitNum, offsetNum);
+    // If pagination is disabled, get all diaries
+    const diaries = await Diary.getAll(
+      effectivePublicOnly,
+      effectiveUserId,
+      pagination ? pagination.limit : null,
+      pagination ? pagination.offset : 0
+    );
 
+    // Get total count for pagination metadata
+    const totalCount = await Diary.countAll(effectivePublicOnly, effectiveUserId);
+
+    // Create response with pagination metadata
     res.status(200).json({
       success: true,
       data: {
         diaries,
-        count: diaries.length,
-        limit: limitNum,
-        offset: offsetNum
+        ...getPaginationMetadata(pagination, totalCount)
       }
     });
   } catch (error) {

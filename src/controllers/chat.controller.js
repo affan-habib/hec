@@ -2,6 +2,7 @@ const db = require('../models');
 const { User, Chat, Message, ChatParticipant } = db;
 const { Op } = db.Sequelize;
 const socketService = require('../services/socket.service');
+const { getPaginationParams, getPaginationMetadata, applyPagination } = require('../utils/pagination.utils');
 
 /**
  * Get all chats for the current user
@@ -11,7 +12,7 @@ const socketService = require('../services/socket.service');
 const getMyChats = async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Find all chats where the user is a participant
     const chats = await Chat.findAll({
       include: [
@@ -45,7 +46,7 @@ const getMyChats = async (req, res) => {
         '$participants.id$': userId
       }
     });
-    
+
     res.status(200).json({
       success: true,
       data: chats
@@ -69,7 +70,7 @@ const getChatById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    
+
     // Find chat by ID
     const chat = await Chat.findByPk(id, {
       include: [
@@ -86,24 +87,24 @@ const getChatById = async (req, res) => {
         }
       ]
     });
-    
+
     if (!chat) {
       return res.status(404).json({
         success: false,
         message: 'Chat not found'
       });
     }
-    
+
     // Check if user is a participant
     const isParticipant = chat.participants.some(participant => participant.id === userId);
-    
+
     if (!isParticipant && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'You are not a participant in this chat'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: chat
@@ -127,9 +128,10 @@ const getChatMessages = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    const { page = 1, limit = 20 } = req.query;
-    const offset = (page - 1) * limit;
-    
+
+    // Get pagination parameters (null if pagination is disabled)
+    const pagination = getPaginationParams(req.query, { defaultLimit: 20 });
+
     // Check if user is a participant
     const participant = await ChatParticipant.findOne({
       where: {
@@ -137,21 +139,21 @@ const getChatMessages = async (req, res) => {
         user_id: userId
       }
     });
-    
+
     if (!participant && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'You are not a participant in this chat'
       });
     }
-    
+
     // Get total count of messages
     const count = await Message.count({
       where: { chat_id: id }
     });
-    
-    // Get messages with pagination
-    const messages = await Message.findAll({
+
+    // Prepare query options
+    let queryOptions = {
       where: { chat_id: id },
       include: [
         {
@@ -160,21 +162,21 @@ const getChatMessages = async (req, res) => {
           attributes: ['id', 'first_name', 'last_name', 'profile_image']
         }
       ],
-      order: [['created_at', 'DESC']],
-      limit: parseInt(limit),
-      offset: parseInt(offset)
-    });
-    
+      order: [['created_at', 'DESC']]
+    };
+
+    // Apply pagination if enabled
+    queryOptions = applyPagination(queryOptions, pagination);
+
+    // Get messages with pagination
+    const messages = await Message.findAll(queryOptions);
+
+    // Create response with pagination metadata
     res.status(200).json({
       success: true,
       data: {
         messages,
-        pagination: {
-          total: count,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(count / limit)
-        }
+        ...getPaginationMetadata(pagination, count)
       }
     });
   } catch (error) {
@@ -196,7 +198,7 @@ const createChat = async (req, res) => {
   try {
     const { name, is_group, participant_ids } = req.body;
     const userId = req.user.id;
-    
+
     // Validate participant IDs
     if (!participant_ids || !Array.isArray(participant_ids) || participant_ids.length === 0) {
       return res.status(400).json({
@@ -204,7 +206,7 @@ const createChat = async (req, res) => {
         message: 'At least one participant is required'
       });
     }
-    
+
     // For non-group chats, check if a chat already exists between these users
     if (!is_group && participant_ids.length === 1) {
       const existingChat = await Chat.findOne({
@@ -226,7 +228,7 @@ const createChat = async (req, res) => {
         },
         having: db.sequelize.literal('COUNT(DISTINCT `participants`.`id`) = 2')
       });
-      
+
       if (existingChat) {
         return res.status(400).json({
           success: false,
@@ -235,10 +237,10 @@ const createChat = async (req, res) => {
         });
       }
     }
-    
+
     // Start a transaction
     const transaction = await db.sequelize.transaction();
-    
+
     try {
       // Create chat
       const chat = await Chat.create({
@@ -246,18 +248,18 @@ const createChat = async (req, res) => {
         is_group: !!is_group,
         created_by: userId
       }, { transaction });
-      
+
       // Add creator as participant
       await ChatParticipant.create({
         chat_id: chat.id,
         user_id: userId
       }, { transaction });
-      
+
       // Add other participants
       for (const participantId of participant_ids) {
         // Skip if participant ID is the same as creator
         if (participantId === userId) continue;
-        
+
         // Check if user exists
         const user = await User.findByPk(participantId);
         if (!user) {
@@ -267,13 +269,13 @@ const createChat = async (req, res) => {
             message: `User with ID ${participantId} not found`
           });
         }
-        
+
         await ChatParticipant.create({
           chat_id: chat.id,
           user_id: participantId
         }, { transaction });
       }
-      
+
       // If initial message is provided, create it
       if (req.body.initial_message) {
         await Message.create({
@@ -282,10 +284,10 @@ const createChat = async (req, res) => {
           content: req.body.initial_message
         }, { transaction });
       }
-      
+
       // Commit the transaction
       await transaction.commit();
-      
+
       // Get the created chat with participants
       const createdChat = await Chat.findByPk(chat.id, {
         include: [
@@ -315,7 +317,7 @@ const createChat = async (req, res) => {
           }
         ]
       });
-      
+
       // Notify participants about the new chat
       for (const participantId of participant_ids) {
         if (participantId !== userId) {
@@ -333,7 +335,7 @@ const createChat = async (req, res) => {
           }
         }
       }
-      
+
       res.status(201).json({
         success: true,
         message: 'Chat created successfully',
@@ -364,17 +366,17 @@ const addParticipant = async (req, res) => {
     const { id } = req.params;
     const { user_id } = req.body;
     const userId = req.user.id;
-    
+
     // Find chat by ID
     const chat = await Chat.findByPk(id);
-    
+
     if (!chat) {
       return res.status(404).json({
         success: false,
         message: 'Chat not found'
       });
     }
-    
+
     // Check if the chat is a group chat
     if (!chat.is_group) {
       return res.status(400).json({
@@ -382,7 +384,7 @@ const addParticipant = async (req, res) => {
         message: 'Cannot add participants to a non-group chat'
       });
     }
-    
+
     // Check if the current user is a participant
     const isParticipant = await ChatParticipant.findOne({
       where: {
@@ -390,24 +392,24 @@ const addParticipant = async (req, res) => {
         user_id: userId
       }
     });
-    
+
     if (!isParticipant && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'You are not a participant in this chat'
       });
     }
-    
+
     // Check if the user to add exists
     const userToAdd = await User.findByPk(user_id);
-    
+
     if (!userToAdd) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
+
     // Check if the user is already a participant
     const existingParticipant = await ChatParticipant.findOne({
       where: {
@@ -415,20 +417,20 @@ const addParticipant = async (req, res) => {
         user_id: user_id
       }
     });
-    
+
     if (existingParticipant) {
       return res.status(400).json({
         success: false,
         message: 'User is already a participant in this chat'
       });
     }
-    
+
     // Add the user as a participant
     await ChatParticipant.create({
       chat_id: id,
       user_id: user_id
     });
-    
+
     // Create a system message
     await Message.create({
       chat_id: id,
@@ -436,7 +438,7 @@ const addParticipant = async (req, res) => {
       content: `${req.user.first_name} ${req.user.last_name} added ${userToAdd.first_name} ${userToAdd.last_name} to the chat`,
       is_system_message: true
     });
-    
+
     // Notify the chat about the new participant
     try {
       socketService.notifyChat(id, 'participant-added', {
@@ -453,7 +455,7 @@ const addParticipant = async (req, res) => {
           last_name: req.user.last_name
         }
       });
-      
+
       // Notify the added user
       socketService.notifyUser(user_id, 'added-to-chat', {
         chatId: id,
@@ -467,7 +469,7 @@ const addParticipant = async (req, res) => {
     } catch (error) {
       console.error('Socket notification error:', error);
     }
-    
+
     res.status(200).json({
       success: true,
       message: 'Participant added successfully'
@@ -491,17 +493,17 @@ const removeParticipant = async (req, res) => {
   try {
     const { id, user_id } = req.params;
     const userId = req.user.id;
-    
+
     // Find chat by ID
     const chat = await Chat.findByPk(id);
-    
+
     if (!chat) {
       return res.status(404).json({
         success: false,
         message: 'Chat not found'
       });
     }
-    
+
     // Check if the chat is a group chat
     if (!chat.is_group) {
       return res.status(400).json({
@@ -509,7 +511,7 @@ const removeParticipant = async (req, res) => {
         message: 'Cannot remove participants from a non-group chat'
       });
     }
-    
+
     // Check if the current user is the creator or an admin
     if (chat.created_by !== userId && req.user.role !== 'admin') {
       return res.status(403).json({
@@ -517,17 +519,17 @@ const removeParticipant = async (req, res) => {
         message: 'Only the chat creator or an admin can remove participants'
       });
     }
-    
+
     // Check if the user to remove exists
     const userToRemove = await User.findByPk(user_id);
-    
+
     if (!userToRemove) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
+
     // Check if the user is a participant
     const participant = await ChatParticipant.findOne({
       where: {
@@ -535,14 +537,14 @@ const removeParticipant = async (req, res) => {
         user_id: user_id
       }
     });
-    
+
     if (!participant) {
       return res.status(400).json({
         success: false,
         message: 'User is not a participant in this chat'
       });
     }
-    
+
     // Cannot remove the creator
     if (chat.created_by === parseInt(user_id) && req.user.role !== 'admin') {
       return res.status(403).json({
@@ -550,7 +552,7 @@ const removeParticipant = async (req, res) => {
         message: 'Cannot remove the chat creator'
       });
     }
-    
+
     // Remove the participant
     await ChatParticipant.destroy({
       where: {
@@ -558,7 +560,7 @@ const removeParticipant = async (req, res) => {
         user_id: user_id
       }
     });
-    
+
     // Create a system message
     await Message.create({
       chat_id: id,
@@ -566,7 +568,7 @@ const removeParticipant = async (req, res) => {
       content: `${req.user.first_name} ${req.user.last_name} removed ${userToRemove.first_name} ${userToRemove.last_name} from the chat`,
       is_system_message: true
     });
-    
+
     // Notify the chat about the removed participant
     try {
       socketService.notifyChat(id, 'participant-removed', {
@@ -578,7 +580,7 @@ const removeParticipant = async (req, res) => {
           last_name: req.user.last_name
         }
       });
-      
+
       // Notify the removed user
       socketService.notifyUser(user_id, 'removed-from-chat', {
         chatId: id,
@@ -592,7 +594,7 @@ const removeParticipant = async (req, res) => {
     } catch (error) {
       console.error('Socket notification error:', error);
     }
-    
+
     res.status(200).json({
       success: true,
       message: 'Participant removed successfully'
@@ -617,7 +619,7 @@ const sendMessage = async (req, res) => {
     const { id } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
-    
+
     // Check if user is a participant
     const participant = await ChatParticipant.findOne({
       where: {
@@ -625,21 +627,21 @@ const sendMessage = async (req, res) => {
         user_id: userId
       }
     });
-    
+
     if (!participant) {
       return res.status(403).json({
         success: false,
         message: 'You are not a participant in this chat'
       });
     }
-    
+
     // Create message
     const message = await Message.create({
       chat_id: id,
       sender_id: userId,
       content
     });
-    
+
     // Get the created message with sender info
     const messageWithSender = await Message.findByPk(message.id, {
       include: [
@@ -650,20 +652,20 @@ const sendMessage = async (req, res) => {
         }
       ]
     });
-    
+
     // Update chat's updated_at timestamp
     await Chat.update(
       { updated_at: new Date() },
       { where: { id } }
     );
-    
+
     // Notify chat participants about the new message
     try {
       socketService.notifyChat(id, 'new-message', messageWithSender);
     } catch (error) {
       console.error('Socket notification error:', error);
     }
-    
+
     res.status(201).json({
       success: true,
       message: 'Message sent successfully',
@@ -688,17 +690,17 @@ const leaveChat = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    
+
     // Find chat by ID
     const chat = await Chat.findByPk(id);
-    
+
     if (!chat) {
       return res.status(404).json({
         success: false,
         message: 'Chat not found'
       });
     }
-    
+
     // Check if the chat is a group chat
     if (!chat.is_group) {
       return res.status(400).json({
@@ -706,7 +708,7 @@ const leaveChat = async (req, res) => {
         message: 'Cannot leave a non-group chat'
       });
     }
-    
+
     // Check if the user is a participant
     const participant = await ChatParticipant.findOne({
       where: {
@@ -714,14 +716,14 @@ const leaveChat = async (req, res) => {
         user_id: userId
       }
     });
-    
+
     if (!participant) {
       return res.status(400).json({
         success: false,
         message: 'You are not a participant in this chat'
       });
     }
-    
+
     // If the user is the creator, assign a new creator
     if (chat.created_by === userId) {
       // Find another participant
@@ -733,26 +735,26 @@ const leaveChat = async (req, res) => {
           }
         }
       });
-      
+
       // If there are no other participants, delete the chat
       if (!newCreator) {
         await Chat.destroy({
           where: { id }
         });
-        
+
         return res.status(200).json({
           success: true,
           message: 'You were the last participant. Chat has been deleted.'
         });
       }
-      
+
       // Update the chat creator
       await Chat.update(
         { created_by: newCreator.user_id },
         { where: { id } }
       );
     }
-    
+
     // Remove the participant
     await ChatParticipant.destroy({
       where: {
@@ -760,7 +762,7 @@ const leaveChat = async (req, res) => {
         user_id: userId
       }
     });
-    
+
     // Create a system message
     await Message.create({
       chat_id: id,
@@ -768,7 +770,7 @@ const leaveChat = async (req, res) => {
       content: `${req.user.first_name} ${req.user.last_name} left the chat`,
       is_system_message: true
     });
-    
+
     // Notify the chat that the user left
     try {
       socketService.notifyChat(id, 'participant-left', {
@@ -782,7 +784,7 @@ const leaveChat = async (req, res) => {
     } catch (error) {
       console.error('Socket notification error:', error);
     }
-    
+
     res.status(200).json({
       success: true,
       message: 'You have left the chat'

@@ -38,6 +38,8 @@
  *           description: The pages in this diary
  */
 
+const { Op } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   const Diary = sequelize.define('Diary', {
     id: {
@@ -83,6 +85,81 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'diary_id',
       as: 'pages'
     });
+  };
+
+  // Static methods
+  Diary.getAll = async (publicOnly = false, userId = null, limit = null, offset = 0) => {
+    const where = {};
+
+    if (publicOnly) {
+      where.is_public = true;
+    }
+
+    if (userId) {
+      where.user_id = userId;
+    }
+
+    const options = {
+      where,
+      order: [['updated_at', 'DESC']],
+      include: [{
+        model: sequelize.models.User,
+        as: 'user',
+        attributes: ['id', 'first_name', 'last_name', 'email']
+      }]
+    };
+
+    // Apply pagination if limit is provided
+    if (limit !== null) {
+      options.limit = limit;
+      options.offset = offset;
+    }
+
+    return await Diary.findAll(options);
+  };
+
+  Diary.countAll = async (publicOnly = false, userId = null) => {
+    const where = {};
+
+    if (publicOnly) {
+      where.is_public = true;
+    }
+
+    if (userId) {
+      where.user_id = userId;
+    }
+
+    return await Diary.count({ where });
+  };
+
+  Diary.findById = async (id, includePages = false) => {
+    const options = {
+      where: { id },
+      include: [{
+        model: sequelize.models.User,
+        as: 'user',
+        attributes: ['id', 'first_name', 'last_name', 'email']
+      }]
+    };
+
+    if (includePages) {
+      options.include.push({
+        model: sequelize.models.DiaryPage,
+        as: 'pages',
+        order: [['created_at', 'DESC']]
+      });
+    }
+
+    return await Diary.findOne(options);
+  };
+
+  Diary.update = async (id, data) => {
+    await Diary.update(data, { where: { id } });
+    return await Diary.findById(id);
+  };
+
+  Diary.delete = async (id) => {
+    return await Diary.destroy({ where: { id } });
   };
 
   return Diary;

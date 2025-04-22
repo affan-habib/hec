@@ -2,6 +2,7 @@ const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 const { pool } = require('../config/db.config');
+const { getPaginationParams, getPaginationMetadata } = require('../utils/pagination.utils');
 
 dotenv.config();
 
@@ -97,18 +98,46 @@ const uploadImage = async (req, res) => {
 const getUserImages = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { limit = 10, offset = 0 } = req.query;
 
+    // Get pagination parameters (null if pagination is disabled)
+    const pagination = getPaginationParams(req.query);
+
+    // Get total count for pagination metadata
+    const [countResult] = await pool.query(
+      'SELECT COUNT(*) as total FROM images WHERE uploaded_by = ?',
+      [userId]
+    );
+    const totalCount = countResult[0].total;
+
+    // If pagination is disabled, get all images
+    if (!pagination) {
+      const [images] = await pool.query(
+        'SELECT * FROM images WHERE uploaded_by = ? ORDER BY created_at DESC',
+        [userId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          images,
+          pagination: false,
+          total: totalCount
+        }
+      });
+    }
+
+    // Get images with pagination
     const [images] = await pool.query(
       'SELECT * FROM images WHERE uploaded_by = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
-      [userId, parseInt(limit), parseInt(offset)]
+      [userId, pagination.limit, pagination.offset]
     );
 
+    // Create response with pagination metadata
     res.status(200).json({
       success: true,
       data: {
         images,
-        count: images.length
+        ...getPaginationMetadata(pagination, totalCount)
       }
     });
   } catch (error) {

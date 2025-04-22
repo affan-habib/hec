@@ -1,4 +1,5 @@
 const Skin = require('../models/skin.model');
+const { getPaginationParams, getPaginationMetadata } = require('../utils/pagination.utils');
 
 /**
  * Create a new skin
@@ -9,7 +10,7 @@ const createSkin = async (req, res) => {
   try {
     const { name, description, theme_data, is_public } = req.body;
     const created_by = req.user.id;
-    
+
     const skin = await Skin.create({
       name,
       description,
@@ -17,7 +18,7 @@ const createSkin = async (req, res) => {
       created_by,
       is_public
     });
-    
+
     res.status(201).json({
       success: true,
       message: 'Skin created successfully',
@@ -42,23 +43,32 @@ const createSkin = async (req, res) => {
  */
 const getAllSkins = async (req, res) => {
   try {
-    const { public_only, user_id, limit = 10, offset = 0 } = req.query;
-    
+    const { public_only, user_id } = req.query;
+
     // Convert string parameters to appropriate types
     const publicOnly = public_only === 'true';
     const userId = user_id ? parseInt(user_id) : null;
-    const limitNum = parseInt(limit);
-    const offsetNum = parseInt(offset);
-    
-    const skins = await Skin.getAll(publicOnly, userId, limitNum, offsetNum);
-    
+
+    // Get pagination parameters (null if pagination is disabled)
+    const pagination = getPaginationParams(req.query);
+
+    // Get skins with pagination
+    const skins = await Skin.getAll(
+      publicOnly,
+      userId,
+      pagination ? pagination.limit : null,
+      pagination ? pagination.offset : 0
+    );
+
+    // Get total count for pagination metadata
+    const totalCount = await Skin.countAll(publicOnly, userId);
+
+    // Create response with pagination metadata
     res.status(200).json({
       success: true,
       data: {
         skins,
-        count: skins.length,
-        limit: limitNum,
-        offset: offsetNum
+        ...getPaginationMetadata(pagination, totalCount)
       }
     });
   } catch (error) {
@@ -79,16 +89,16 @@ const getAllSkins = async (req, res) => {
 const getSkinById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const skin = await Skin.findById(parseInt(id));
-    
+
     if (!skin) {
       return res.status(404).json({
         success: false,
         message: 'Skin not found'
       });
     }
-    
+
     // Check if user has access to the skin
     if (!skin.is_public && skin.created_by !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
@@ -96,7 +106,7 @@ const getSkinById = async (req, res) => {
         message: 'You do not have permission to access this skin'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: {
@@ -122,17 +132,17 @@ const updateSkin = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, theme_data, is_public } = req.body;
-    
+
     // Check if skin exists
     const existingSkin = await Skin.findById(parseInt(id));
-    
+
     if (!existingSkin) {
       return res.status(404).json({
         success: false,
         message: 'Skin not found'
       });
     }
-    
+
     // Check if user has permission to update the skin
     if (existingSkin.created_by !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
@@ -140,14 +150,14 @@ const updateSkin = async (req, res) => {
         message: 'You do not have permission to update this skin'
       });
     }
-    
+
     const updatedSkin = await Skin.update(parseInt(id), {
       name,
       description,
       theme_data,
       is_public
     });
-    
+
     res.status(200).json({
       success: true,
       message: 'Skin updated successfully',
@@ -173,17 +183,17 @@ const updateSkin = async (req, res) => {
 const deleteSkin = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Check if skin exists
     const existingSkin = await Skin.findById(parseInt(id));
-    
+
     if (!existingSkin) {
       return res.status(404).json({
         success: false,
         message: 'Skin not found'
       });
     }
-    
+
     // Check if user has permission to delete the skin
     if (existingSkin.created_by !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
@@ -191,9 +201,9 @@ const deleteSkin = async (req, res) => {
         message: 'You do not have permission to delete this skin'
       });
     }
-    
+
     await Skin.delete(parseInt(id));
-    
+
     res.status(200).json({
       success: true,
       message: 'Skin deleted successfully'

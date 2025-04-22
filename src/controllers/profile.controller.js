@@ -1,6 +1,7 @@
 const db = require('../models');
 const { User, StudentProfile, TutorProfile, AdminProfile } = db;
 const { Op } = db.Sequelize;
+const { getPaginationParams, getPaginationMetadata, applyPagination } = require('../utils/pagination.utils');
 
 /**
  * Get the profile of the current user
@@ -341,9 +342,11 @@ const updateUserProfile = async (req, res) => {
  */
 const getAllTutors = async (req, res) => {
   try {
-    // Get query parameters for pagination and filtering
-    const { page = 1, limit = 10, specialization, min_experience, max_hourly_rate } = req.query;
-    const offset = (page - 1) * limit;
+    // Get query parameters for filtering
+    const { specialization, min_experience, max_hourly_rate } = req.query;
+
+    // Get pagination parameters (null if pagination is disabled)
+    const pagination = getPaginationParams(req.query);
 
     // Build the where clause for filtering
     const tutorWhere = { role: 'tutor' };
@@ -361,8 +364,8 @@ const getAllTutors = async (req, res) => {
       profileWhere.hourly_rate = { [Op.lte]: parseFloat(max_hourly_rate) };
     }
 
-    // Find all tutors with their profiles
-    const { count, rows: tutors } = await User.findAndCountAll({
+    // Prepare query options
+    let queryOptions = {
       where: tutorWhere,
       attributes: { exclude: ['password'] },
       include: [{
@@ -370,21 +373,21 @@ const getAllTutors = async (req, res) => {
         as: 'tutorProfile',
         where: Object.keys(profileWhere).length > 0 ? profileWhere : undefined
       }],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
       order: [['first_name', 'ASC']]
-    });
+    };
 
+    // Apply pagination if enabled
+    queryOptions = applyPagination(queryOptions, pagination);
+
+    // Find all tutors with their profiles
+    const { count, rows: tutors } = await User.findAndCountAll(queryOptions);
+
+    // Create response with pagination metadata
     res.status(200).json({
       success: true,
       data: {
         tutors,
-        pagination: {
-          total: count,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(count / limit)
-        }
+        ...getPaginationMetadata(pagination, count)
       }
     });
   } catch (error) {
