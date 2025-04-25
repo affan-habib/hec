@@ -14,38 +14,38 @@ const router = express.Router();
  *     description: |
  *       Retrieves a list of all tutors with their profiles.
  *       Supports pagination, filtering, and sorting.
- *       
+ *
  *       ## Filtering Options
  *       - **name**: Filter by tutor's first or last name (partial match)
  *       - **specialization**: Filter by specialization area
  *       - **min_experience**: Filter by minimum years of experience
  *       - **max_hourly_rate**: Filter by maximum hourly rate
- *       
+ *
  *       ## Sorting Options
  *       - **sort_by**: Field to sort by (first_name, last_name, experience, hourly_rate)
  *       - **sort_order**: Sort order (ASC or DESC)
- *       
+ *
  *       ## Pagination
  *       - **page**: Page number (default: 1)
  *       - **limit**: Number of tutors per page (default: 10)
- *       
+ *
  *       ## Example Requests
- *       
+ *
  *       Basic request:
  *       ```
  *       GET /api/tutors
  *       ```
- *       
+ *
  *       With filtering:
  *       ```
  *       GET /api/tutors?name=John&specialization=Business%20English&min_experience=3&max_hourly_rate=30
  *       ```
- *       
+ *
  *       With sorting:
  *       ```
  *       GET /api/tutors?sort_by=hourly_rate&sort_order=ASC
  *       ```
- *       
+ *
  *       With pagination:
  *       ```
  *       GET /api/tutors?page=2&limit=5
@@ -169,14 +169,14 @@ router.get(
   '/',
   authenticate,
   [
-    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
-    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
-    query('name').optional().isString().withMessage('Name must be a string'),
-    query('specialization').optional().isString().withMessage('Specialization must be a string'),
-    query('min_experience').optional().isInt({ min: 0 }).withMessage('Minimum experience must be a non-negative integer'),
-    query('max_hourly_rate').optional().isFloat({ min: 0 }).withMessage('Maximum hourly rate must be a non-negative number'),
-    query('sort_by').optional().isIn(['first_name', 'last_name', 'experience', 'hourly_rate']).withMessage('Sort by must be one of: first_name, last_name, experience, hourly_rate'),
-    query('sort_order').optional().isIn(['ASC', 'DESC']).withMessage('Sort order must be ASC or DESC')
+    query('page').optional({ nullable: true, checkFalsy: true }).isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional({ nullable: true, checkFalsy: true }).isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('name').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Name must be a string'),
+    query('specialization').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Specialization must be a string'),
+    query('min_experience').optional({ nullable: true, checkFalsy: true }).isInt({ min: 0 }).withMessage('Minimum experience must be a non-negative integer'),
+    query('max_hourly_rate').optional({ nullable: true, checkFalsy: true }).isFloat({ min: 0 }).withMessage('Maximum hourly rate must be a non-negative number'),
+    query('sort_by').optional({ nullable: true, checkFalsy: true }).isIn(['first_name', 'last_name', 'experience', 'hourly_rate']).withMessage('Sort by must be one of: first_name, last_name, experience, hourly_rate'),
+    query('sort_order').optional({ nullable: true, checkFalsy: true }).isIn(['ASC', 'DESC']).withMessage('Sort order must be ASC or DESC')
   ],
   validate,
   tutorController.getAllTutors
@@ -189,7 +189,7 @@ router.get(
  *     summary: Get a tutor by ID
  *     description: |
  *       Retrieves a tutor by their ID, including their profile information.
- *       
+ *
  *       ## Example Request
  *       ```
  *       GET /api/tutors/2
@@ -263,7 +263,7 @@ router.get(
  *     description: |
  *       Creates a new tutor with their profile information.
  *       Only administrators can create tutors.
- *       
+ *
  *       ## Example Request
  *       ```json
  *       {
@@ -408,7 +408,7 @@ router.post(
  *     description: |
  *       Updates a tutor's information and profile.
  *       Tutors can update their own profiles, and administrators can update any tutor.
- *       
+ *
  *       ## Example Request
  *       ```json
  *       {
@@ -543,7 +543,7 @@ router.put(
  *     description: |
  *       Deletes a tutor and their profile.
  *       Only administrators can delete tutors.
- *       
+ *
  *       ## Example Request
  *       ```
  *       DELETE /api/tutors/3
