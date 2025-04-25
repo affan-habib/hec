@@ -13,8 +13,8 @@ const server = http.createServer(app);
 testConnection()
   .then(success => {
     if (success) {
-      // Sync database models
-      db.sequelize.sync({ alter: true })
+      // Sync database models without altering tables
+      db.sequelize.sync()
         .then(() => {
           console.log('Database synchronized successfully');
 
