@@ -1,19 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiBell, FiUser, FiMoon, FiSun } from 'react-icons/fi';
+import Link from 'next/link';
+import { FiBell, FiUser, FiMoon, FiSun, FiSettings, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const [darkMode, setDarkMode] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     // Check if dark mode is enabled in localStorage
     const isDarkMode = localStorage.getItem('darkMode') === 'true';
     setDarkMode(isDarkMode);
-    
+
     // Apply dark mode class to document if enabled
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -26,7 +27,7 @@ const Header = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     localStorage.setItem('darkMode', newDarkMode.toString());
-    
+
     if (newDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -43,7 +44,7 @@ const Header = () => {
               Hello English Coaching Admin
             </h1>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             {/* Dark Mode Toggle */}
             <button
@@ -53,7 +54,7 @@ const Header = () => {
             >
               {darkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
             </button>
-            
+
             {/* Notifications */}
             <button
               className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -61,7 +62,7 @@ const Header = () => {
             >
               <FiBell size={20} />
             </button>
-            
+
             {/* User Profile */}
             <div className="relative">
               <button
@@ -76,32 +77,36 @@ const Header = () => {
                   {user?.first_name ? `${user.first_name} ${user.last_name}` : 'Admin'}
                 </span>
               </button>
-              
+
               {/* Dropdown Menu */}
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  <Link
+                    href="/profile"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onClick={() => setDropdownOpen(false)}
                   >
+                    <FiUser className="mr-2" />
                     Your Profile
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onClick={() => setDropdownOpen(false)}
                   >
+                    <FiSettings className="mr-2" />
                     Settings
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  </Link>
+                  <button
+                    className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => {
                       setDropdownOpen(false);
                       logout();
                     }}
                   >
+                    <FiLogOut className="mr-2" />
                     Sign out
-                  </a>
+                  </button>
                 </div>
               )}
             </div>
