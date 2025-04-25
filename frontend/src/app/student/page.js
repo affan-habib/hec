@@ -13,12 +13,7 @@ const StudentDashboard = () => {
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
-        // Fetch student profile data
-        const token = localStorage.getItem('token');
-        if (!token) {
-          window.location.href = '/login';
-          return;
-        }
+
 
         // Mock data for now - in a real app, this would be fetched from the API
         setStudent({
