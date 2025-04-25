@@ -25,6 +25,7 @@ const forumRoutes = require('./routes/forum.routes');
 const imageRoutes = require('./routes/image.routes');
 const assetCategoryRoutes = require('./routes/asset-category.routes');
 const assetRoutes = require('./routes/asset.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 
 // Initialize express app
 const app = express();
@@ -63,6 +64,7 @@ app.use('/api/forums', forumRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/asset-categories', assetCategoryRoutes);
 app.use('/api/assets', assetRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
