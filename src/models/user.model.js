@@ -177,6 +177,13 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'uploaded_by',
       as: 'uploadedImages'
     });
+
+    User.belongsToMany(models.Asset, {
+      through: models.UserAsset,
+      foreignKey: 'user_id',
+      otherKey: 'asset_id',
+      as: 'assets'
+    });
   };
 
   return User;

@@ -23,6 +23,8 @@ const chatRoutes = require('./routes/chat.routes');
 const awardRoutes = require('./routes/award.routes');
 const forumRoutes = require('./routes/forum.routes');
 const imageRoutes = require('./routes/image.routes');
+const assetCategoryRoutes = require('./routes/asset-category.routes');
+const assetRoutes = require('./routes/asset.routes');
 
 // Initialize express app
 const app = express();
@@ -59,6 +61,8 @@ app.use('/api/chats', chatRoutes);
 app.use('/api/awards', awardRoutes);
 app.use('/api/forums', forumRoutes);
 app.use('/api/images', imageRoutes);
+app.use('/api/asset-categories', assetCategoryRoutes);
+app.use('/api/assets', assetRoutes);
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
