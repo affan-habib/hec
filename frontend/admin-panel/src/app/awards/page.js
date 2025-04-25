@@ -33,31 +33,36 @@ const AwardsPage = () => {
       };
 
       const response = await awardService.getAll(params);
-      
-      // Check if response has the expected structure
-      if (response.data && Array.isArray(response.data.awards)) {
-        setAwards(response.data.awards);
-        
-        // Extract pagination data
-        const paginationData = response.data.pagination || {};
-        setPagination({
-          page: paginationData.page || 1,
-          limit: paginationData.limit || 10,
-          total: paginationData.total || 0,
-          totalPages: paginationData.pages || 1,
-          hasNextPage: paginationData.page < paginationData.pages,
-          hasPrevPage: paginationData.page > 1,
-        });
-      } else if (response.success && Array.isArray(response.data)) {
-        // Alternative response format
-        setAwards(response.data);
-        setPagination({
-          ...pagination,
-          total: response.data.length,
-          totalPages: 1,
-          hasNextPage: false,
-          hasPrevPage: false,
-        });
+
+      if (response.success && response.data) {
+        // Handle the response structure from the backend
+        if (Array.isArray(response.data.awards)) {
+          setAwards(response.data.awards);
+
+          // Extract pagination data
+          const paginationData = response.data.pagination || {};
+          setPagination({
+            page: paginationData.page || 1,
+            limit: paginationData.limit || 10,
+            total: paginationData.total || 0,
+            totalPages: paginationData.totalPages || 1,
+            hasNextPage: paginationData.hasNextPage || false,
+            hasPrevPage: paginationData.hasPrevPage || false,
+          });
+        } else if (Array.isArray(response.data)) {
+          // Alternative response format
+          setAwards(response.data);
+          setPagination({
+            ...pagination,
+            total: response.data.length,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+          });
+        } else {
+          console.error('Unexpected API response format:', response);
+          setAwards([]);
+        }
       } else {
         console.error('Unexpected API response format:', response);
         setAwards([]);
@@ -123,9 +128,9 @@ const AwardsPage = () => {
       header: 'Image',
       render: (value) => (
         value ? (
-          <img 
-            src={value} 
-            alt="Award" 
+          <img
+            src={value}
+            alt="Award"
             className="h-10 w-10 rounded-full object-cover"
             onError={(e) => {
               e.target.onerror = null;

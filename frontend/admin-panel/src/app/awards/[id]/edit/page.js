@@ -20,7 +20,18 @@ const EditAwardPage = ({ params }) => {
     const fetchAward = async () => {
       try {
         const response = await awardService.getById(id);
-        setAward(response.data);
+
+        if (response.success && response.data) {
+          // Map points to points_required for the form
+          const awardData = { ...response.data };
+          if (awardData.points !== undefined && awardData.points_required === undefined) {
+            awardData.points_required = awardData.points;
+          }
+          setAward(awardData);
+        } else {
+          console.error('Unexpected API response format:', response);
+          setError('Failed to load award data. Please try again.');
+        }
       } catch (error) {
         console.error('Error fetching award:', error);
         setError('Failed to load award data. Please try again.');

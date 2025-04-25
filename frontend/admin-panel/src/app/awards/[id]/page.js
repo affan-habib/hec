@@ -18,7 +18,13 @@ const AwardDetailPage = ({ params }) => {
     const fetchAward = async () => {
       try {
         const response = await awardService.getById(id);
-        setAward(response.data);
+
+        if (response.success && response.data) {
+          setAward(response.data);
+        } else {
+          console.error('Unexpected API response format:', response);
+          setError('Failed to load award data. Please try again.');
+        }
       } catch (error) {
         console.error('Error fetching award:', error);
         setError('Failed to load award data. Please try again.');
