@@ -33,12 +33,11 @@ const LoginPage = () => {
 
     try {
       const result = await login(values.email, values.password);
-      
+
       if (!result.success) {
         setError(result.message);
-      } else {
-        router.push('/dashboard');
       }
+      // No need to redirect here as it's handled in the login function
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
       console.error('Login error:', err);

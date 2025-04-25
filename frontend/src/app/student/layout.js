@@ -1,16 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { FiBook, FiMessageSquare, FiAward, FiUser, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function StudentLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   // Handle sidebar toggle
   const toggleSidebar = () => {
@@ -53,10 +54,8 @@ export default function StudentLayout({ children }) {
 
   // Handle logout
   const handleLogout = () => {
-    // Clear auth token
-    localStorage.removeItem('token');
-    // Redirect to login page
-    router.push('/login');
+    // Use the logout function from useAuth hook
+    logout();
   };
 
   return (
