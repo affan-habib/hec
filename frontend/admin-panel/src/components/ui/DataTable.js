@@ -39,11 +39,6 @@ const DataTable = ({
         <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
-              {onEdit || onDelete || onView ? (
-                <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                  <span className="sr-only">Actions</span>
-                </th>
-              ) : null}
               {columns.map((column) => (
                 <th
                   key={column.key}
@@ -53,6 +48,12 @@ const DataTable = ({
                   {column.header}
                 </th>
               ))}
+              {onEdit || onDelete || onView ? (
+                <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6 text-right">
+                  <span className="sr-only">Actions</span>
+                  Actions
+                </th>
+              ) : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
@@ -90,6 +91,16 @@ const DataTable = ({
                   }`}
                   onClick={() => onRowClick && onRowClick(row)}
                 >
+                  {columns.map((column) => (
+                    <td
+                      key={`${row.id}-${column.key}`}
+                      className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
+                    >
+                      {column.render
+                        ? column.render(row[column.key], row)
+                        : row[column.key]}
+                    </td>
+                  ))}
                   {(onEdit || onDelete || onView) && (
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                       <div className="flex space-x-2 justify-end">
@@ -132,16 +143,6 @@ const DataTable = ({
                       </div>
                     </td>
                   )}
-                  {columns.map((column) => (
-                    <td
-                      key={`${row.id}-${column.key}`}
-                      className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"
-                    >
-                      {column.render
-                        ? column.render(row[column.key], row)
-                        : row[column.key]}
-                    </td>
-                  ))}
                 </tr>
               ))
             )}

@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiHome, FiUsers, FiBook, FiMessageSquare, 
+import {
+  FiHome, FiUsers, FiBook, FiMessageSquare,
   FiAward, FiMessageCircle, FiImage, FiLayout,
   FiMenu, FiChevronDown, FiChevronRight, FiLogOut
 } from 'react-icons/fi';
@@ -58,7 +58,7 @@ const menuItems = [
   },
 ];
 
-const Sidebar = () => {
+const Sidebar = ({ onToggle }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const pathname = usePathname();
@@ -68,14 +68,18 @@ const Sidebar = () => {
   useEffect(() => {
     const savedState = localStorage.getItem('sidebarCollapsed');
     if (savedState !== null) {
-      setIsCollapsed(JSON.parse(savedState));
+      const collapsed = JSON.parse(savedState);
+      setIsCollapsed(collapsed);
+      if (onToggle) onToggle(collapsed);
     }
-  }, []);
+  }, [onToggle]);
 
   // Save sidebar state to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed));
-  }, [isCollapsed]);
+    // Notify parent component about the change
+    if (onToggle) onToggle(isCollapsed);
+  }, [isCollapsed, onToggle]);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -103,7 +107,7 @@ const Sidebar = () => {
         {/* Sidebar Header */}
         <div className="p-4 border-b border-indigo-800 flex items-center justify-between">
           {!isCollapsed && (
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -112,7 +116,7 @@ const Sidebar = () => {
               헬로 잉글리시
             </motion.h1>
           )}
-          <button 
+          <button
             onClick={toggleSidebar}
             className="p-2 rounded-full hover:bg-indigo-800 transition-colors"
           >
@@ -130,8 +134,8 @@ const Sidebar = () => {
                     <button
                       onClick={() => toggleSubmenu(index)}
                       className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-                        isSubmenuActive(item.submenuItems) 
-                          ? 'bg-indigo-800 text-white' 
+                        isSubmenuActive(item.submenuItems)
+                          ? 'bg-indigo-800 text-white'
                           : 'text-gray-300 hover:bg-indigo-800 hover:text-white'
                       }`}
                     >
@@ -156,8 +160,8 @@ const Sidebar = () => {
                             <li key={subIndex}>
                               <Link href={subItem.path}>
                                 <span className={`block p-2 rounded-md transition-colors ${
-                                  isActive(subItem.path) 
-                                    ? 'bg-indigo-700 text-white' 
+                                  isActive(subItem.path)
+                                    ? 'bg-indigo-700 text-white'
                                     : 'text-gray-300 hover:bg-indigo-700 hover:text-white'
                                 }`}>
                                   {subItem.title}
@@ -172,8 +176,8 @@ const Sidebar = () => {
                 ) : (
                   <Link href={item.path}>
                     <span className={`flex items-center p-3 rounded-lg transition-colors ${
-                      isActive(item.path) 
-                        ? 'bg-indigo-800 text-white' 
+                      isActive(item.path)
+                        ? 'bg-indigo-800 text-white'
                         : 'text-gray-300 hover:bg-indigo-800 hover:text-white'
                     }`}>
                       <span className="mr-3">{item.icon}</span>
@@ -188,7 +192,7 @@ const Sidebar = () => {
 
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-indigo-800">
-          <button 
+          <button
             onClick={logout}
             className="w-full flex items-center p-3 rounded-lg text-gray-300 hover:bg-indigo-800 hover:text-white transition-colors"
           >

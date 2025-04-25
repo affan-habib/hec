@@ -24,6 +24,21 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        // Helper function to safely extract count from different response formats
+        const getCount = (response) => {
+          if (response?.data?.data?.pagination?.total !== undefined) {
+            return response.data.data.pagination.total;
+          } else if (response?.data?.pagination?.total !== undefined) {
+            return response.data.pagination.total;
+          } else if (Array.isArray(response?.data?.data)) {
+            return response.data.data.length;
+          } else if (Array.isArray(response?.data)) {
+            return response.data.length;
+          } else {
+            return 0;
+          }
+        };
+
         // Fetch students count
         const studentsResponse = await api.get('/students', { params: { limit: 1 } });
 
@@ -44,27 +59,27 @@ const Dashboard = () => {
 
         setStats({
           students: {
-            count: studentsResponse.data.data.pagination?.total || 0,
+            count: getCount(studentsResponse),
             loading: false
           },
           tutors: {
-            count: tutorsResponse.data.data.pagination?.total || 0,
+            count: getCount(tutorsResponse),
             loading: false
           },
           diaries: {
-            count: diariesResponse.data.data.pagination?.total || 0,
+            count: getCount(diariesResponse),
             loading: false
           },
           chats: {
-            count: chatsResponse.data.data.pagination?.total || 0,
+            count: getCount(chatsResponse),
             loading: false
           },
           awards: {
-            count: awardsResponse.data.data.pagination?.total || 0,
+            count: getCount(awardsResponse),
             loading: false
           },
           forums: {
-            count: forumsResponse.data.data.pagination?.total || 0,
+            count: getCount(forumsResponse),
             loading: false
           },
         });

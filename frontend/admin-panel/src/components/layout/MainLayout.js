@@ -62,11 +62,10 @@ const MainLayout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      <Sidebar />
+      <Sidebar onToggle={(collapsed) => setIsSidebarCollapsed(collapsed)} />
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? 'ml-20' : 'ml-64'
-        }`}
+        className="flex-1 flex flex-col transition-all duration-300 ease-in-out"
+        style={{ marginLeft: isSidebarCollapsed ? '80px' : '256px' }}
       >
         <Header />
         <main className="flex-1 overflow-y-auto p-6">
