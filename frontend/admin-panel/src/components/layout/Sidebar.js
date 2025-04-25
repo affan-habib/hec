@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiHome, FiUsers, FiBook, FiMessageSquare,
   FiAward, FiMessageCircle, FiImage, FiLayout,
-  FiMenu, FiChevronDown, FiChevronRight, FiLogOut
+  FiMenu, FiChevronDown, FiChevronRight, FiLogOut,
+  FiGrid, FiPackage
 } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -45,6 +46,15 @@ const menuItems = [
     title: 'Forums',
     icon: <FiMessageCircle size={20} />,
     path: '/forums',
+  },
+  {
+    title: 'Assets',
+    icon: <FiPackage size={20} />,
+    submenu: true,
+    submenuItems: [
+      { title: 'Asset Categories', path: '/asset-categories' },
+      { title: 'Assets', path: '/assets' },
+    ],
   },
   {
     title: 'Skins',
