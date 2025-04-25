@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   FiUsers, FiBook, FiMessageSquare, FiAward,
-  FiMessageCircle, FiImage, FiPackage, FiDollarSign,
+  FiMessageCircle, FiPackage, FiDollarSign,
   FiTrendingUp, FiBarChart2, FiPieChart, FiActivity
 } from 'react-icons/fi';
 import { motion } from 'framer-motion';
@@ -28,109 +28,98 @@ const Dashboard = () => {
   const [assetUsage, setAssetUsage] = useState(null);
   const [topAssets, setTopAssets] = useState(null);
   const [recentActivities, setRecentActivities] = useState([]);
+  const [error, setError] = useState({
+    stats: false,
+    userGrowth: false,
+    activityDistribution: false,
+    assetUsage: false,
+    topAssets: false,
+    recentActivities: false
+  });
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
-      try {
-        // Fetch all dashboard data
-        const [
-          dashboardStats,
-          userGrowthData,
-          activityData,
-          assetUsageData,
-          topAssetsData,
-          recentActivitiesData
-        ] = await Promise.all([
-          analyticsService.getDashboardStats().catch(() => ({
-            success: false,
-            data: {
-              students: { count: 125, previousCount: 100, percentChange: 25 },
-              tutors: { count: 18, previousCount: 15, percentChange: 20 },
-              assets: { count: 85, previousCount: 70, percentChange: 21.4 },
-              revenue: { amount: 2500, previousAmount: 2000, percentChange: 25 }
-            }
-          })),
-          analyticsService.getUserGrowth().catch(() => ({
-            success: false,
-            data: {
-              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-              datasets: [
-                {
-                  label: 'Students',
-                  data: [50, 65, 75, 90, 110, 125],
-                  borderColor: '#4F46E5',
-                  backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                  fill: true
-                },
-                {
-                  label: 'Tutors',
-                  data: [8, 10, 12, 14, 16, 18],
-                  borderColor: '#10B981',
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  fill: true
-                }
-              ]
-            }
-          })),
-          analyticsService.getActivityDistribution().catch(() => ({
-            success: false,
-            data: {
-              labels: ['Chats', 'Diaries', 'Forums', 'Asset Usage', 'Awards'],
-              values: [35, 25, 15, 15, 10],
-              colors: ['#4F46E5', '#10B981', '#F59E0B', '#EC4899', '#3B82F6']
-            }
-          })),
-          analyticsService.getAssetUsage().catch(() => ({
-            success: false,
-            data: {
-              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-              datasets: [
-                {
-                  label: 'Free Assets',
-                  data: [30, 40, 45, 50, 55, 60],
-                  backgroundColor: '#4F46E5'
-                },
-                {
-                  label: 'Premium Assets',
-                  data: [10, 15, 18, 20, 22, 25],
-                  backgroundColor: '#F59E0B'
-                }
-              ]
-            }
-          })),
-          analyticsService.getTopAssets().catch(() => ({
-            success: false,
-            data: {
-              labels: ['Happy Face', 'Blue Sky', 'Gold Star', 'Heart', 'Trophy'],
-              values: [120, 95, 80, 65, 50],
-              colors: ['#4F46E5', '#10B981', '#F59E0B', '#EC4899', '#3B82F6']
-            }
-          })),
-          analyticsService.getRecentActivities().catch(() => ({
-            success: false,
-            data: [
-              { id: 1, type: 'asset_purchase', user: 'John Doe', asset: 'Premium Background', timestamp: new Date(Date.now() - 1 * 3600000).toISOString() },
-              { id: 2, type: 'chat_message', user: 'Jane Smith', message: 'New message in English chat', timestamp: new Date(Date.now() - 2 * 3600000).toISOString() },
-              { id: 3, type: 'diary_entry', user: 'Mike Johnson', diary: 'My English Journey', timestamp: new Date(Date.now() - 5 * 3600000).toISOString() },
-              { id: 4, type: 'forum_post', user: 'Sarah Williams', forum: 'Grammar Questions', timestamp: new Date(Date.now() - 8 * 3600000).toISOString() },
-              { id: 5, type: 'award_earned', user: 'David Brown', award: 'Conversation Master', timestamp: new Date(Date.now() - 12 * 3600000).toISOString() }
-            ]
-          }))
-        ]);
 
-        // Update state with fetched data
-        setStats(dashboardStats.data);
-        setUserGrowth(userGrowthData.data);
-        setActivityDistribution(activityData.data);
-        setAssetUsage(assetUsageData.data);
-        setTopAssets(topAssetsData.data);
-        setRecentActivities(recentActivitiesData.data);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setIsLoading(false);
+      // Fetch dashboard stats
+      try {
+        const response = await analyticsService.getDashboardStats();
+        if (response.success) {
+          setStats(response.data);
+        } else {
+          setError(prev => ({ ...prev, stats: true }));
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        setError(prev => ({ ...prev, stats: true }));
       }
+
+      // Fetch user growth data
+      try {
+        const response = await analyticsService.getUserGrowth();
+        if (response.success) {
+          setUserGrowth(response.data);
+        } else {
+          setError(prev => ({ ...prev, userGrowth: true }));
+        }
+      } catch (err) {
+        console.error('Error fetching user growth data:', err);
+        setError(prev => ({ ...prev, userGrowth: true }));
+      }
+
+      // Fetch activity distribution data
+      try {
+        const response = await analyticsService.getActivityDistribution();
+        if (response.success) {
+          setActivityDistribution(response.data);
+        } else {
+          setError(prev => ({ ...prev, activityDistribution: true }));
+        }
+      } catch (err) {
+        console.error('Error fetching activity distribution data:', err);
+        setError(prev => ({ ...prev, activityDistribution: true }));
+      }
+
+      // Fetch asset usage data
+      try {
+        const response = await analyticsService.getAssetUsage();
+        if (response.success) {
+          setAssetUsage(response.data);
+        } else {
+          setError(prev => ({ ...prev, assetUsage: true }));
+        }
+      } catch (err) {
+        console.error('Error fetching asset usage data:', err);
+        setError(prev => ({ ...prev, assetUsage: true }));
+      }
+
+      // Fetch top assets data
+      try {
+        const response = await analyticsService.getTopAssets();
+        if (response.success) {
+          setTopAssets(response.data);
+        } else {
+          setError(prev => ({ ...prev, topAssets: true }));
+        }
+      } catch (err) {
+        console.error('Error fetching top assets data:', err);
+        setError(prev => ({ ...prev, topAssets: true }));
+      }
+
+      // Fetch recent activities data
+      try {
+        const response = await analyticsService.getRecentActivities();
+        if (response.success) {
+          setRecentActivities(response.data);
+        } else {
+          setError(prev => ({ ...prev, recentActivities: true }));
+        }
+      } catch (err) {
+        console.error('Error fetching recent activities data:', err);
+        setError(prev => ({ ...prev, recentActivities: true }));
+      }
+
+      setIsLoading(false);
     };
 
     fetchDashboardData();
@@ -213,47 +202,55 @@ const Dashboard = () => {
         <motion.div variants={item}>
           <AnalyticsCard
             title="Students"
-            value={stats.students.count}
-            previousValue={stats.students.previousCount}
-            percentChange={stats.students.percentChange}
+            value={isLoading ? '...' : error.stats ? 'Error' : stats?.students?.count}
+            previousValue={error.stats ? null : stats?.students?.previousCount}
+            percentChange={error.stats ? null : stats?.students?.percentChange}
             icon={<FiUsers className="h-6 w-6" />}
-            onClick={() => router.push('/students')}
+            onClick={error.stats ? null : () => router.push('/students')}
             loading={isLoading}
+            error={error.stats}
+            onRetry={() => window.location.reload()}
           />
         </motion.div>
 
         <motion.div variants={item}>
           <AnalyticsCard
             title="Tutors"
-            value={stats.tutors.count}
-            previousValue={stats.tutors.previousCount}
-            percentChange={stats.tutors.percentChange}
+            value={isLoading ? '...' : error.stats ? 'Error' : stats?.tutors?.count}
+            previousValue={error.stats ? null : stats?.tutors?.previousCount}
+            percentChange={error.stats ? null : stats?.tutors?.percentChange}
             icon={<FiUsers className="h-6 w-6" />}
-            onClick={() => router.push('/tutors')}
+            onClick={error.stats ? null : () => router.push('/tutors')}
             loading={isLoading}
+            error={error.stats}
+            onRetry={() => window.location.reload()}
           />
         </motion.div>
 
         <motion.div variants={item}>
           <AnalyticsCard
             title="Assets"
-            value={stats.assets.count}
-            previousValue={stats.assets.previousCount}
-            percentChange={stats.assets.percentChange}
+            value={isLoading ? '...' : error.stats ? 'Error' : stats?.assets?.count}
+            previousValue={error.stats ? null : stats?.assets?.previousCount}
+            percentChange={error.stats ? null : stats?.assets?.percentChange}
             icon={<FiPackage className="h-6 w-6" />}
-            onClick={() => router.push('/assets')}
+            onClick={error.stats ? null : () => router.push('/assets')}
             loading={isLoading}
+            error={error.stats}
+            onRetry={() => window.location.reload()}
           />
         </motion.div>
 
         <motion.div variants={item}>
           <AnalyticsCard
             title="Revenue"
-            value={formatCurrency(stats.revenue.amount)}
-            previousValue={stats.revenue.previousAmount}
-            percentChange={stats.revenue.percentChange}
+            value={isLoading ? '...' : error.stats ? 'Error' : formatCurrency(stats?.revenue?.amount)}
+            previousValue={error.stats ? null : stats?.revenue?.previousAmount}
+            percentChange={error.stats ? null : stats?.revenue?.percentChange}
             icon={<FiDollarSign className="h-6 w-6" />}
             loading={isLoading}
+            error={error.stats}
+            onRetry={() => window.location.reload()}
           />
         </motion.div>
       </motion.div>
@@ -275,6 +272,16 @@ const Dashboard = () => {
             <div className="h-64 flex items-center justify-center">
               <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
+          ) : error.userGrowth ? (
+            <div className="h-64 flex items-center justify-center flex-col">
+              <p className="text-red-500 dark:text-red-400 mb-2">Failed to load data</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
           ) : (
             userGrowth && <LineChart data={userGrowth} height={300} />
           )}
@@ -294,6 +301,16 @@ const Dashboard = () => {
           {isLoading ? (
             <div className="h-64 flex items-center justify-center">
               <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : error.activityDistribution ? (
+            <div className="h-64 flex items-center justify-center flex-col">
+              <p className="text-red-500 dark:text-red-400 mb-2">Failed to load data</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+              >
+                Refresh
+              </button>
             </div>
           ) : (
             activityDistribution && <PieChart data={activityDistribution} height={300} doughnut={true} />
@@ -318,6 +335,16 @@ const Dashboard = () => {
             <div className="h-64 flex items-center justify-center">
               <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
+          ) : error.assetUsage ? (
+            <div className="h-64 flex items-center justify-center flex-col">
+              <p className="text-red-500 dark:text-red-400 mb-2">Failed to load data</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
           ) : (
             assetUsage && <BarChart data={assetUsage} height={300} />
           )}
@@ -337,6 +364,16 @@ const Dashboard = () => {
           {isLoading ? (
             <div className="h-64 flex items-center justify-center">
               <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : error.topAssets ? (
+            <div className="h-64 flex items-center justify-center flex-col">
+              <p className="text-red-500 dark:text-red-400 mb-2">Failed to load data</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+              >
+                Refresh
+              </button>
             </div>
           ) : (
             topAssets && <BarChart data={{
@@ -368,6 +405,16 @@ const Dashboard = () => {
           {isLoading ? (
             <div className="p-6 flex justify-center">
               <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : error.recentActivities ? (
+            <div className="p-6 flex items-center justify-center flex-col">
+              <p className="text-red-500 dark:text-red-400 mb-2">Failed to load recent activities</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+              >
+                Refresh
+              </button>
             </div>
           ) : recentActivities.length > 0 ? (
             <ul>

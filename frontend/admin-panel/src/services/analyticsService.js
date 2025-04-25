@@ -7,7 +7,10 @@ class AnalyticsService {
       return response.data;
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch dashboard statistics'
+      };
     }
   }
 
@@ -17,7 +20,10 @@ class AnalyticsService {
       return response.data;
     } catch (error) {
       console.error('Error fetching user growth:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch user growth data'
+      };
     }
   }
 
@@ -27,7 +33,10 @@ class AnalyticsService {
       return response.data;
     } catch (error) {
       console.error('Error fetching activity distribution:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch activity distribution data'
+      };
     }
   }
 
@@ -37,7 +46,10 @@ class AnalyticsService {
       return response.data;
     } catch (error) {
       console.error('Error fetching asset usage:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch asset usage data'
+      };
     }
   }
 
@@ -47,7 +59,10 @@ class AnalyticsService {
       return response.data;
     } catch (error) {
       console.error('Error fetching top assets:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch top assets data'
+      };
     }
   }
 
@@ -57,7 +72,10 @@ class AnalyticsService {
       return response.data;
     } catch (error) {
       console.error('Error fetching top categories:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch top categories data'
+      };
     }
   }
 
@@ -67,7 +85,10 @@ class AnalyticsService {
       return response.data;
     } catch (error) {
       console.error('Error fetching revenue stats:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch revenue statistics'
+      };
     }
   }
 
@@ -77,7 +98,10 @@ class AnalyticsService {
       return response.data;
     } catch (error) {
       console.error('Error fetching user engagement:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch user engagement data'
+      };
     }
   }
 
@@ -87,7 +111,10 @@ class AnalyticsService {
       return response.data;
     } catch (error) {
       console.error('Error fetching recent activities:', error);
-      throw error;
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch recent activities'
+      };
     }
   }
 }

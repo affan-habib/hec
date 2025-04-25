@@ -15,8 +15,8 @@ const LoginPage = () => {
   const router = useRouter();
 
   const initialValues = {
-    email: '',
-    password: '',
+    email: 'admin@example.com',
+    password: 'Admin123!',
     rememberMe: false,
   };
 
