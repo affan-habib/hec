@@ -716,7 +716,7 @@ const getRecentActivities = async (req, res) => {
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'username', 'first_name', 'last_name']
+            attributes: ['id', 'email', 'first_name', 'last_name']
           },
           {
             model: Asset,
@@ -739,7 +739,7 @@ const getRecentActivities = async (req, res) => {
     let activities = recentAssetPurchases.map(purchase => ({
       id: purchase.id,
       type: 'asset_purchase',
-      user: `${purchase.user.first_name} ${purchase.user.last_name}` || purchase.user.username,
+      user: `${purchase.user.first_name} ${purchase.user.last_name}` || purchase.user.email,
       asset: purchase.asset.name,
       timestamp: purchase.purchased_at
     }));
@@ -757,35 +757,35 @@ const getRecentActivities = async (req, res) => {
           {
             id: 1,
             type: 'asset_purchase',
-            user: users[0] ? `${users[0].first_name} ${users[0].last_name}` || users[0].username : 'John Doe',
+            user: users[0] ? `${users[0].first_name} ${users[0].last_name}` || users[0].email : 'John Doe',
             asset: 'Premium Background',
             timestamp: new Date(Date.now() - 1 * 3600000).toISOString()
           },
           {
             id: 2,
             type: 'chat_message',
-            user: users[1] ? `${users[1].first_name} ${users[1].last_name}` || users[1].username : 'Jane Smith',
+            user: users[1] ? `${users[1].first_name} ${users[1].last_name}` || users[1].email : 'Jane Smith',
             message: 'New message in English chat',
             timestamp: new Date(Date.now() - 2 * 3600000).toISOString()
           },
           {
             id: 3,
             type: 'diary_entry',
-            user: users[2] ? `${users[2].first_name} ${users[2].last_name}` || users[2].username : 'Mike Johnson',
+            user: users[2] ? `${users[2].first_name} ${users[2].last_name}` || users[2].email : 'Mike Johnson',
             diary: 'My English Journey',
             timestamp: new Date(Date.now() - 5 * 3600000).toISOString()
           },
           {
             id: 4,
             type: 'forum_post',
-            user: users[3] ? `${users[3].first_name} ${users[3].last_name}` || users[3].username : 'Sarah Williams',
+            user: users[3] ? `${users[3].first_name} ${users[3].last_name}` || users[3].email : 'Sarah Williams',
             forum: 'Grammar Questions',
             timestamp: new Date(Date.now() - 8 * 3600000).toISOString()
           },
           {
             id: 5,
             type: 'award_earned',
-            user: users[4] ? `${users[4].first_name} ${users[4].last_name}` || users[4].username : 'David Brown',
+            user: users[4] ? `${users[4].first_name} ${users[4].last_name}` || users[4].email : 'David Brown',
             award: 'Conversation Master',
             timestamp: new Date(Date.now() - 12 * 3600000).toISOString()
           }
