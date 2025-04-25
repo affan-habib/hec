@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  FiUsers, FiBook, FiMessageSquare, 
-  FiAward, FiMessageCircle, FiImage 
+import {
+  FiUsers, FiBook, FiMessageSquare,
+  FiAward, FiMessageCircle, FiImage
 } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import StatsCard from '@/components/ui/StatsCard';
@@ -26,46 +26,46 @@ const Dashboard = () => {
       try {
         // Fetch students count
         const studentsResponse = await api.get('/students', { params: { limit: 1 } });
-        
+
         // Fetch tutors count
         const tutorsResponse = await api.get('/tutors', { params: { limit: 1 } });
-        
+
         // Fetch diaries count
         const diariesResponse = await api.get('/diaries', { params: { limit: 1 } });
-        
+
         // Fetch chats count
         const chatsResponse = await api.get('/chats', { params: { limit: 1 } });
-        
+
         // Fetch awards count
         const awardsResponse = await api.get('/awards', { params: { limit: 1 } });
-        
+
         // Fetch forums count
         const forumsResponse = await api.get('/forums', { params: { limit: 1 } });
-        
+
         setStats({
-          students: { 
-            count: studentsResponse.data.data.pagination?.total || 0, 
-            loading: false 
+          students: {
+            count: studentsResponse.data.data.pagination?.total || 0,
+            loading: false
           },
-          tutors: { 
-            count: tutorsResponse.data.data.pagination?.total || 0, 
-            loading: false 
+          tutors: {
+            count: tutorsResponse.data.data.pagination?.total || 0,
+            loading: false
           },
-          diaries: { 
-            count: diariesResponse.data.data.pagination?.total || 0, 
-            loading: false 
+          diaries: {
+            count: diariesResponse.data.data.pagination?.total || 0,
+            loading: false
           },
-          chats: { 
-            count: chatsResponse.data.data.pagination?.total || 0, 
-            loading: false 
+          chats: {
+            count: chatsResponse.data.data.pagination?.total || 0,
+            loading: false
           },
-          awards: { 
-            count: awardsResponse.data.data.pagination?.total || 0, 
-            loading: false 
+          awards: {
+            count: awardsResponse.data.data.pagination?.total || 0,
+            loading: false
           },
-          forums: { 
-            count: forumsResponse.data.data.pagination?.total || 0, 
-            loading: false 
+          forums: {
+            count: forumsResponse.data.data.pagination?.total || 0,
+            loading: false
           },
         });
       } catch (error) {
@@ -108,7 +108,7 @@ const Dashboard = () => {
         </p>
       </div>
 
-      <motion.div 
+      <motion.div
         className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
         variants={container}
         initial="hidden"
@@ -122,7 +122,7 @@ const Dashboard = () => {
             onClick={() => router.push('/students')}
           />
         </motion.div>
-        
+
         <motion.div variants={item}>
           <StatsCard
             title="Tutors"
@@ -131,7 +131,7 @@ const Dashboard = () => {
             onClick={() => router.push('/tutors')}
           />
         </motion.div>
-        
+
         <motion.div variants={item}>
           <StatsCard
             title="Diaries"
@@ -140,7 +140,7 @@ const Dashboard = () => {
             onClick={() => router.push('/diaries')}
           />
         </motion.div>
-        
+
         <motion.div variants={item}>
           <StatsCard
             title="Chats"
@@ -149,7 +149,7 @@ const Dashboard = () => {
             onClick={() => router.push('/chats')}
           />
         </motion.div>
-        
+
         <motion.div variants={item}>
           <StatsCard
             title="Awards"
@@ -158,7 +158,7 @@ const Dashboard = () => {
             onClick={() => router.push('/awards')}
           />
         </motion.div>
-        
+
         <motion.div variants={item}>
           <StatsCard
             title="Forums"

@@ -34,8 +34,8 @@ const MainLayout = ({ children }) => {
     };
   }, []);
 
-  // Check if the current route is a public route (login, register, etc.)
-  const isPublicRoute = pathname === '/auth/login' || pathname === '/auth/register';
+  // Check if the current route is a public route (home, login, register, etc.)
+  const isPublicRoute = pathname === '/' || pathname === '/auth/login' || pathname === '/auth/register';
 
   if (loading) {
     return (
@@ -63,7 +63,7 @@ const MainLayout = ({ children }) => {
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       <Sidebar />
-      <div 
+      <div
         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
           isSidebarCollapsed ? 'ml-20' : 'ml-64'
         }`}
@@ -73,7 +73,7 @@ const MainLayout = ({ children }) => {
           {children}
         </main>
         <footer className="py-4 px-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>© 2023 Hello English Coaching Admin. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Hello English Coaching Admin. All rights reserved.</p>
         </footer>
       </div>
     </div>

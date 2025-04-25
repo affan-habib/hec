@@ -1,5 +1,5 @@
-const DiaryPage = require('../models/diary-page.model');
-const Diary = require('../models/diary.model');
+const db = require('../models');
+const { DiaryPage, Diary } = db;
 const { getPaginationParams, getPaginationMetadata } = require('../utils/pagination.utils');
 
 /**
