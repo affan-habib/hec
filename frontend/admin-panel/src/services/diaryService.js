@@ -1,4 +1,5 @@
 import ApiService from './apiService';
+import { api } from './apiService';
 
 class DiaryService extends ApiService {
   constructor() {
@@ -8,8 +9,9 @@ class DiaryService extends ApiService {
   // Get diary pages
   async getDiaryPages(diaryId, params = {}) {
     try {
-      const response = await this.custom('get', `/${diaryId}/pages`, null, { params });
-      return response;
+      // Use the correct API endpoint for diary pages
+      const response = await api.get(`/diary-pages/diary/${diaryId}`, { params });
+      return response.data;
     } catch (error) {
       throw error;
     }
@@ -18,8 +20,13 @@ class DiaryService extends ApiService {
   // Create diary page
   async createDiaryPage(diaryId, data) {
     try {
-      const response = await this.custom('post', `/${diaryId}/pages`, data);
-      return response;
+      // Create diary page with the correct API endpoint
+      const payload = {
+        ...data,
+        diary_id: diaryId
+      };
+      const response = await api.post('/diary-pages', payload);
+      return response.data;
     } catch (error) {
       throw error;
     }
@@ -28,8 +35,9 @@ class DiaryService extends ApiService {
   // Update diary page
   async updateDiaryPage(diaryId, pageId, data) {
     try {
-      const response = await this.custom('put', `/${diaryId}/pages/${pageId}`, data);
-      return response;
+      // Update diary page with the correct API endpoint
+      const response = await api.put(`/diary-pages/${pageId}`, data);
+      return response.data;
     } catch (error) {
       throw error;
     }
@@ -38,8 +46,9 @@ class DiaryService extends ApiService {
   // Delete diary page
   async deleteDiaryPage(diaryId, pageId) {
     try {
-      const response = await this.custom('delete', `/${diaryId}/pages/${pageId}`);
-      return response;
+      // Delete diary page with the correct API endpoint
+      const response = await api.delete(`/diary-pages/${pageId}`);
+      return response.data;
     } catch (error) {
       throw error;
     }
