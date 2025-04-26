@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiMessageCircle, FiUser, FiClock, FiChevronRight } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
+import chatService from '@/services/chatService';
 
 const ChatPreview = ({ maxItems = 5, showHeader = true, onClose = null }) => {
   const [loading, setLoading] = useState(true);
@@ -12,113 +13,23 @@ const ChatPreview = ({ maxItems = 5, showHeader = true, onClose = null }) => {
 
   useEffect(() => {
     const fetchChats = async () => {
+      if (!user) return;
+
       setLoading(true);
       try {
-        // This would be replaced with an actual API call
-        // For now, we'll use mock data
-        const mockChats = [
-          {
-            id: 1,
-            user: {
-              id: 101,
-              name: 'John Smith',
-              avatar: null,
-              role: 'student'
-            },
-            last_message: {
-              content: 'Hello, I have a question about the homework assignment.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
-              is_read: false
-            }
-          },
-          {
-            id: 2,
-            user: {
-              id: 102,
-              name: 'Sarah Johnson',
-              avatar: null,
-              role: 'student'
-            },
-            last_message: {
-              content: 'Thank you for your feedback on my essay!',
-              timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-              is_read: true
-            }
-          },
-          {
-            id: 3,
-            user: {
-              id: 103,
-              name: 'Michael Brown',
-              avatar: null,
-              role: 'tutor'
-            },
-            last_message: {
-              content: 'I\'ve reviewed your latest submission. Great progress!',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-              is_read: true
-            }
-          },
-          {
-            id: 4,
-            user: {
-              id: 104,
-              name: 'Emily Davis',
-              avatar: null,
-              role: 'student'
-            },
-            last_message: {
-              content: 'When is our next session scheduled?',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-              is_read: false
-            }
-          },
-          {
-            id: 5,
-            user: {
-              id: 105,
-              name: 'David Wilson',
-              avatar: null,
-              role: 'student'
-            },
-            last_message: {
-              content: 'I\'ve completed all the exercises for this week.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-              is_read: true
-            }
-          },
-          {
-            id: 6,
-            user: {
-              id: 106,
-              name: 'Jessica Taylor',
-              avatar: null,
-              role: 'student'
-            },
-            last_message: {
-              content: 'Could you explain the grammar rule again?',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-              is_read: true
-            }
-          }
-        ];
+        // Get chats from API
+        const response = await chatService.getAll();
 
-        // Filter chats based on user role
-        let filteredChats = [];
-        if (user?.role === 'admin') {
-          // Admin sees all chats
-          filteredChats = mockChats;
-        } else if (user?.role === 'tutor') {
-          // Tutor sees chats with students
-          filteredChats = mockChats.filter(chat => chat.user.role === 'student');
-        } else if (user?.role === 'student') {
-          // Student sees chats with tutors
-          filteredChats = mockChats.filter(chat => chat.user.role === 'tutor');
+        if (response.success) {
+          // The API should already filter chats based on user role
+          setChats(response.data || []);
+        } else {
+          console.error('Failed to fetch chats:', response.message);
+          setChats([]);
         }
-
-        setChats(filteredChats);
       } catch (error) {
         console.error('Error fetching chats:', error);
+        setChats([]);
       } finally {
         setLoading(false);
       }

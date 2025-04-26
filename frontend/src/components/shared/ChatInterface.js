@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { FiSearch, FiUser, FiSend, FiPaperclip, FiImage, FiFile, FiMessageCircle } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
+import chatService from '@/services/chatService';
 
 const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
   const [chats, setChats] = useState([]);
@@ -22,247 +23,140 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
   // Fetch chats
   useEffect(() => {
     const fetchChats = async () => {
+      if (!user) return;
+
       setLoading(true);
       try {
-        // This would be replaced with an actual API call
-        // For now, we'll use mock data
-        const mockChats = [
-          {
-            id: 1,
-            user: {
-              id: 101,
-              name: 'John Smith',
-              avatar: null,
-              role: 'student'
-            },
-            last_message: {
-              content: 'Hello, I have a question about the homework assignment.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
-              is_read: false
-            }
-          },
-          {
-            id: 2,
-            user: {
-              id: 102,
-              name: 'Sarah Johnson',
-              avatar: null,
-              role: 'student'
-            },
-            last_message: {
-              content: 'Thank you for your feedback on my essay!',
-              timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-              is_read: true
-            }
-          },
-          {
-            id: 3,
-            user: {
-              id: 103,
-              name: 'Michael Brown',
-              avatar: null,
-              role: 'tutor'
-            },
-            last_message: {
-              content: 'I\'ve reviewed your latest submission. Great progress!',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-              is_read: true
-            }
-          },
-          {
-            id: 4,
-            user: {
-              id: 104,
-              name: 'Emily Davis',
-              avatar: null,
-              role: 'student'
-            },
-            last_message: {
-              content: 'When is our next session scheduled?',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-              is_read: false
-            }
-          },
-          {
-            id: 5,
-            user: {
-              id: 105,
-              name: 'David Wilson',
-              avatar: null,
-              role: 'student'
-            },
-            last_message: {
-              content: 'I\'ve completed all the exercises for this week.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-              is_read: true
+        // Get chats from API
+        const response = await chatService.getAll();
+
+        if (response.success) {
+          let filteredChats = response.data || [];
+
+          // Apply search filter if any
+          if (searchTerm) {
+            filteredChats = filteredChats.filter(chat =>
+              chat.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              (chat.last_message && chat.last_message.content.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+          }
+
+          setChats(filteredChats);
+
+          // If a chat ID is provided, select that chat
+          if (selectedChatId) {
+            const chat = filteredChats.find(c => c.id === parseInt(selectedChatId));
+            if (chat) {
+              setSelectedChat(chat);
+
+              // Mark messages as read
+              try {
+                await chatService.markAsRead(chat.id);
+              } catch (readError) {
+                console.error('Error marking messages as read:', readError);
+              }
             }
           }
-        ];
-
-        // Filter chats based on user type
-        let filteredChats = [];
-        if (userType === 'admin') {
-          // Admin sees all chats
-          filteredChats = mockChats;
-        } else if (userType === 'tutor') {
-          // Tutor sees chats with students
-          filteredChats = mockChats.filter(chat => chat.user.role === 'student');
-        } else if (userType === 'student') {
-          // Student sees chats with tutors
-          filteredChats = mockChats.filter(chat => chat.user.role === 'tutor');
-        }
-
-        // Apply search filter if any
-        if (searchTerm) {
-          filteredChats = filteredChats.filter(chat =>
-            chat.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            chat.last_message.content.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        }
-
-        setChats(filteredChats);
-
-        // If a chat ID is provided, select that chat
-        if (selectedChatId) {
-          const chat = filteredChats.find(c => c.id === parseInt(selectedChatId));
-          if (chat) {
-            setSelectedChat(chat);
-          }
+        } else {
+          console.error('Failed to fetch chats:', response.message);
+          setChats([]);
         }
       } catch (error) {
         console.error('Error fetching chats:', error);
+        setChats([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchChats();
-  }, [selectedChatId, userType, searchTerm]);
+  }, [selectedChatId, userType, searchTerm, user]);
 
   // Fetch messages when a chat is selected
   useEffect(() => {
     if (selectedChat) {
       const fetchMessages = async () => {
         try {
-          // This would be replaced with an actual API call
-          // For now, we'll use mock data
-          const mockMessages = [
-            {
-              id: 1,
-              sender_id: selectedChat.user.id,
-              sender_name: selectedChat.user.name,
-              sender_role: selectedChat.user.role,
-              content: 'Hello! How can I help you today?',
-              timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
-              is_read: true
-            },
-            {
-              id: 2,
-              sender_id: user?.id || 999,
-              sender_name: user?.first_name + ' ' + user?.last_name || 'You',
-              sender_role: userType,
-              content: 'I have a question about the homework assignment.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 55).toISOString(), // 55 minutes ago
-              is_read: true
-            },
-            {
-              id: 3,
-              sender_id: selectedChat.user.id,
-              sender_name: selectedChat.user.name,
-              sender_role: selectedChat.user.role,
-              content: 'Sure, what specifically are you having trouble with?',
-              timestamp: new Date(Date.now() - 1000 * 60 * 50).toISOString(), // 50 minutes ago
-              is_read: true
-            },
-            {
-              id: 4,
-              sender_id: user?.id || 999,
-              sender_name: user?.first_name + ' ' + user?.last_name || 'You',
-              sender_role: userType,
-              content: 'I\'m not sure how to approach question 3. It asks about the main theme of the passage, but I\'m finding multiple themes.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 minutes ago
-              is_read: true
-            },
-            {
-              id: 5,
-              sender_id: selectedChat.user.id,
-              sender_name: selectedChat.user.name,
-              sender_role: selectedChat.user.role,
-              content: 'That\'s a good observation! Literary passages often have multiple themes. In this case, try to identify which theme is most prominently developed throughout the entire passage. Look for recurring elements or ideas that the author emphasizes.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 40).toISOString(), // 40 minutes ago
-              is_read: true
-            },
-            {
-              id: 6,
-              sender_id: user?.id || 999,
-              sender_name: user?.first_name + ' ' + user?.last_name || 'You',
-              sender_role: userType,
-              content: 'That makes sense. I think the theme of personal growth is mentioned most frequently.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 35).toISOString(), // 35 minutes ago
-              is_read: true
-            },
-            {
-              id: 7,
-              sender_id: selectedChat.user.id,
-              sender_name: selectedChat.user.name,
-              sender_role: selectedChat.user.role,
-              content: 'Great! Now try to find specific examples from the text that support this theme. This will strengthen your answer.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-              is_read: true
-            },
-            {
-              id: 8,
-              sender_id: user?.id || 999,
-              sender_name: user?.first_name + ' ' + user?.last_name || 'You',
-              sender_role: userType,
-              content: 'I\'ll do that. Thank you for your help!',
-              timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(), // 25 minutes ago
-              is_read: true
-            },
-            {
-              id: 9,
-              sender_id: selectedChat.user.id,
-              sender_name: selectedChat.user.name,
-              sender_role: selectedChat.user.role,
-              content: 'You\'re welcome! Let me know if you have any other questions.',
-              timestamp: new Date(Date.now() - 1000 * 60 * 20).toISOString(), // 20 minutes ago
-              is_read: true
-            }
-          ];
+          // Get messages from API
+          const response = await chatService.getChatMessages(selectedChat.id);
 
-          setMessages(mockMessages);
-          setTimeout(scrollToBottom, 100);
+          if (response.success) {
+            setMessages(response.data || []);
+            setTimeout(scrollToBottom, 100);
+          } else {
+            console.error('Failed to fetch messages:', response.message);
+            setMessages([]);
+          }
         } catch (error) {
           console.error('Error fetching messages:', error);
+          setMessages([]);
         }
       };
 
       fetchMessages();
+
+      // Set up polling for new messages
+      const intervalId = setInterval(fetchMessages, 10000); // Poll every 10 seconds
+
+      return () => {
+        clearInterval(intervalId); // Clean up on unmount or when chat changes
+      };
     }
-  }, [selectedChat, user, userType]);
+  }, [selectedChat]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim() === '' || !selectedChat) return;
 
-    const newMsg = {
-      id: messages.length + 1,
-      sender_id: user?.id || 999,
+    // Optimistically add the message to the UI
+    const tempMsg = {
+      id: 'temp-' + Date.now(),
+      sender_id: user?.id,
       sender_name: user?.first_name + ' ' + user?.last_name || 'You',
       sender_role: userType,
       content: newMessage,
       timestamp: new Date().toISOString(),
-      is_read: true
+      is_read: true,
+      pending: true
     };
 
-    setMessages([...messages, newMsg]);
+    setMessages([...messages, tempMsg]);
+    const messageContent = newMessage;
     setNewMessage('');
 
-    // In a real app, you would send this message to your API
+    try {
+      // Send message to API
+      const response = await chatService.sendMessage(selectedChat.id, messageContent);
+
+      if (response.success) {
+        // Replace the temporary message with the real one from the server
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.id === tempMsg.id ? response.data : msg
+          )
+        );
+      } else {
+        console.error('Failed to send message:', response.message);
+        // Mark the message as failed
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.id === tempMsg.id ? { ...msg, failed: true, pending: false } : msg
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Mark the message as failed
+      setMessages(prevMessages =>
+        prevMessages.map(msg =>
+          msg.id === tempMsg.id ? { ...msg, failed: true, pending: false } : msg
+        )
+      );
+    }
   };
 
   // Format timestamp to readable format
@@ -432,18 +326,32 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
                       <div
                         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                           message.sender_role === userType
-                            ? 'bg-indigo-600 text-white'
+                            ? message.failed
+                              ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                              : message.pending
+                                ? 'bg-indigo-400 text-white'
+                                : 'bg-indigo-600 text-white'
                             : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
                         }`}
                       >
                         <p className="text-sm">{message.content}</p>
-                        <p className={`text-xs mt-1 text-right ${
+                        <div className={`flex justify-end items-center mt-1 text-xs ${
                           message.sender_role === userType
-                            ? 'text-indigo-200'
+                            ? message.failed
+                              ? 'text-red-600 dark:text-red-400'
+                              : message.pending
+                                ? 'text-indigo-100'
+                                : 'text-indigo-200'
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {formatTimestamp(message.timestamp)}
-                        </p>
+                          {message.failed && (
+                            <span className="mr-1">Failed to send</span>
+                          )}
+                          {message.pending && (
+                            <span className="mr-1">Sending...</span>
+                          )}
+                          <span>{formatTimestamp(message.timestamp)}</span>
+                        </div>
                       </div>
                       {message.sender_role === userType && (
                         <div className="flex-shrink-0 ml-3 self-end">
