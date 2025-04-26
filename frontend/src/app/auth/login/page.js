@@ -15,8 +15,8 @@ const LoginPage = () => {
   const router = useRouter();
 
   const initialValues = {
-    email: 'admin@example.com',
-    password: 'Admin123!',
+    email: '',
+    password: '',
     rememberMe: false,
   };
 
@@ -41,6 +41,25 @@ const LoginPage = () => {
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
       console.error('Login error:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleQuickLogin = async (email, password) => {
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      console.log(`Quick login with: ${email} / ${password}`);
+      const result = await login(email, password);
+
+      if (!result.success) {
+        setError(result.message || 'Login failed. Please check the credentials.');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Quick login error:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -81,7 +100,7 @@ const LoginPage = () => {
             헬로 잉글리시
           </h1>
           <h2 className="mt-2 text-center text-xl font-bold text-gray-900 dark:text-white">
-            Admin Panel
+            Hello English Coaching
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             Sign in to your account
@@ -105,6 +124,38 @@ const LoginPage = () => {
           >
             Forgot your password?
           </Link>
+        </div>
+
+        <div className="mt-6">
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-3">
+            Quick login for testing:
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => handleQuickLogin('admin@example.com', 'Admin123!')}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              disabled={isSubmitting}
+            >
+              Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickLogin('tutor@helloenlishcoaching.com', 'tutor123')}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              disabled={isSubmitting}
+            >
+              Tutor
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickLogin('student@helloenlishcoaching.com', 'student123')}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              disabled={isSubmitting}
+            >
+              Student
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>

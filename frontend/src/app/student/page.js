@@ -236,15 +236,15 @@ const StudentDashboard = () => {
           <h2 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
             Recent Diaries
           </h2>
-          <Link href="/student/diaries/new">
-            <motion.button
+          <Link href="/student/diaries/new" passHref>
+            <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex items-center px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer"
             >
               <FiPlus className="-ml-1 mr-1 h-4 w-4" />
               New Diary
-            </motion.button>
+            </motion.div>
           </Link>
         </div>
         <div className="border-t border-gray-200 dark:border-gray-700">
@@ -252,37 +252,38 @@ const StudentDashboard = () => {
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {recentDiaries.map((diary) => (
                 <li key={diary.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <Link href={`/student/diaries/${diary.id}`} className="block">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                            <FiBook className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {diary.title}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {diary.pages_count} pages
-                          </div>
+                  <div className="flex items-center justify-between">
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={() => window.location.href = `/student/diaries/${diary.id}`}
+                    >
+                      <div className="flex-shrink-0">
+                        <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                          <FiBook className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                         </div>
                       </div>
-                      <div className="flex flex-col items-end">
-                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                          <FiCalendar className="mr-1.5 h-4 w-4" />
-                          {new Date(diary.updated_at).toLocaleDateString()}
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {diary.title}
                         </div>
-                        {diary.last_page && (
-                          <Link href={`/student/diaries/${diary.id}/pages/${diary.last_page.id}`} className="mt-1 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 flex items-center">
-                            <FiEdit className="mr-1 h-4 w-4" />
-                            Continue writing
-                          </Link>
-                        )}
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {diary.pages_count} pages
+                        </div>
                       </div>
                     </div>
-                  </Link>
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                        <FiCalendar className="mr-1.5 h-4 w-4" />
+                        {new Date(diary.updated_at).toLocaleDateString()}
+                      </div>
+                      {diary.last_page && (
+                        <Link href={`/student/diaries/${diary.id}/pages/${diary.last_page.id}`} className="mt-1 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 flex items-center">
+                          <FiEdit className="mr-1 h-4 w-4" />
+                          Continue writing
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -308,14 +309,9 @@ const StudentDashboard = () => {
                 Get started by creating a new diary.
               </p>
               <div className="mt-6">
-                <Link href="/student/diaries/new">
-                  <button
-                    type="button"
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    <FiPlus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                    New Diary
-                  </button>
+                <Link href="/student/diaries/new" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                  <FiPlus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                  New Diary
                 </Link>
               </div>
             </div>
@@ -360,14 +356,9 @@ const StudentDashboard = () => {
               </div>
             </div>
             <div className="mt-4">
-              <Link href="/student/chat">
-                <button
-                  type="button"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  <FiMessageSquare className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                  Chat with Tutor
-                </button>
+              <Link href="/student/chat" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <FiMessageSquare className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                Chat with Tutor
               </Link>
             </div>
           </div>
