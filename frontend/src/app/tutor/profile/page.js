@@ -22,7 +22,8 @@ export default function TutorProfilePage() {
     bio: '',
     specializations: [],
     education: [],
-    experience: []
+    experience: 0,
+    experience_list: []
   });
   const [formData, setFormData] = useState({
     first_name: '',
@@ -33,6 +34,7 @@ export default function TutorProfilePage() {
     specialization: '',
     education: '',
     experience: '',
+    experience_entry: '',
     hourly_rate: ''
   });
 
@@ -206,16 +208,16 @@ export default function TutorProfilePage() {
   };
 
   const handleAddExperience = () => {
-    if (formData.experience.trim()) {
-      const [position, company, period] = formData.experience.split(',').map(item => item.trim());
+    if (formData.experience_entry && formData.experience_entry.trim()) {
+      const [position, company, period] = formData.experience_entry.split(',').map(item => item.trim());
       if (position && company) {
         setProfileData({
           ...profileData,
-          experience: [...profileData.experience, { position, company, period: period || '' }]
+          experience_list: [...profileData.experience_list, { position, company, period: period || '' }]
         });
         setFormData({
           ...formData,
-          experience: ''
+          experience_entry: ''
         });
       }
     }
@@ -241,11 +243,11 @@ export default function TutorProfilePage() {
   };
 
   const handleRemoveExperience = (index) => {
-    const newExperience = [...profileData.experience];
-    newExperience.splice(index, 1);
+    const newExperienceList = [...profileData.experience_list];
+    newExperienceList.splice(index, 1);
     setProfileData({
       ...profileData,
-      experience: newExperience
+      experience_list: newExperienceList
     });
   };
 
@@ -638,8 +640,8 @@ export default function TutorProfilePage() {
             <div className="mb-4 flex">
               <input
                 type="text"
-                name="experience"
-                value={formData.experience}
+                name="experience_entry"
+                value={formData.experience_entry || ''}
                 onChange={handleInputChange}
                 placeholder="Position, Company, Period (e.g. English Tutor, Language School, 2018-2020)"
                 className="flex-grow border border-gray-300 dark:border-gray-600 rounded-l-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -653,7 +655,7 @@ export default function TutorProfilePage() {
             </div>
           )}
           <div className="space-y-4">
-            {profileData.experience.map((exp, index) => (
+            {profileData.experience_list.map((exp, index) => (
               <div key={index} className="flex justify-between items-start">
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white">{exp.position}</h4>
@@ -670,8 +672,8 @@ export default function TutorProfilePage() {
                 )}
               </div>
             ))}
-            {profileData.experience.length === 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No experience added yet.</p>
+            {profileData.experience_list.length === 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">No work experience entries added yet.</p>
             )}
           </div>
         </div>

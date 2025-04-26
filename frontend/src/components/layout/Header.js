@@ -6,6 +6,38 @@ import { FiBell, FiUser, FiMoon, FiSun, FiSettings, FiLogOut } from 'react-icons
 import { useAuth } from '@/hooks/useAuth';
 import Cookies from 'js-cookie';
 
+// Function to get the appropriate profile path based on user role
+const getProfilePathByRole = (user) => {
+  if (!user) return '/auth/login';
+
+  switch (user.role) {
+    case 'admin':
+      return '/admin/profile';
+    case 'tutor':
+      return '/tutor/profile';
+    case 'student':
+      return '/student/profile';
+    default:
+      return '/auth/login';
+  }
+};
+
+// Function to get the appropriate settings path based on user role
+const getSettingsPathByRole = (user) => {
+  if (!user) return '/auth/login';
+
+  switch (user.role) {
+    case 'admin':
+      return '/admin/settings';
+    case 'tutor':
+      return '/tutor/settings';
+    case 'student':
+      return '/student/settings';
+    default:
+      return '/auth/login';
+  }
+};
+
 const Header = () => {
   const [darkMode, setDarkMode] = useState(false);
   const { user, logout } = useAuth();
@@ -42,7 +74,10 @@ const Header = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <h1 className="text-xl font-semibold text-gray-800 dark:text-white">
-              Hello English Coaching Admin
+              {user?.role === 'admin' && 'Hello English Coaching Admin'}
+              {user?.role === 'tutor' && 'Hello English Coaching Tutor'}
+              {user?.role === 'student' && 'Hello English Coaching Student'}
+              {!user?.role && 'Hello English Coaching'}
             </h1>
           </div>
 
@@ -83,7 +118,7 @@ const Header = () => {
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
                   <Link
-                    href="/profile"
+                    href={getProfilePathByRole(user)}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => setDropdownOpen(false)}
                   >
@@ -91,7 +126,7 @@ const Header = () => {
                     Your Profile
                   </Link>
                   <Link
-                    href="/settings"
+                    href={getSettingsPathByRole(user)}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => setDropdownOpen(false)}
                   >
