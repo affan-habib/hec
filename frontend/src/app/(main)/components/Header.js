@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiChevronDown, FiMenu, FiX } from 'react-icons/fi';
+import { FiChevronDown, FiMenu, FiX, FiUser, FiLogOut, FiSettings, FiBook, FiMessageSquare, FiAward } from 'react-icons/fi';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -12,6 +13,7 @@ export default function Header() {
   const [activeSubmenu, setActiveSubmenu] = useState(null);
   const submenuRefs = useRef({});
   const pathname = usePathname();
+  const { user, logout, isAuthenticated } = useAuth();
 
   // Handle scroll effect for header
   useEffect(() => {
@@ -33,15 +35,31 @@ export default function Header() {
     setActiveSubmenu(activeSubmenu === menu ? null : menu);
   };
 
+  // Get dashboard link based on user role
+  const getDashboardLink = () => {
+    if (!user) return '/auth/login';
+
+    switch (user.role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'tutor':
+        return '/tutor/dashboard';
+      case 'student':
+        return '/student';
+      default:
+        return '/auth/login';
+    }
+  };
+
   // Close submenu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (activeSubmenu && submenuRefs.current[activeSubmenu] && 
+      if (activeSubmenu && submenuRefs.current[activeSubmenu] &&
           !submenuRefs.current[activeSubmenu].contains(event.target)) {
         setActiveSubmenu(null);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [activeSubmenu]);
@@ -96,13 +114,13 @@ export default function Header() {
 
   // Submenu animation variants
   const submenuVariants = {
-    hidden: { 
-      opacity: 0, 
+    hidden: {
+      opacity: 0,
       y: -5,
       transition: { duration: 0.2 }
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.3 }
     },
@@ -110,11 +128,11 @@ export default function Header() {
 
   // Mobile menu animation variants
   const mobileMenuVariants = {
-    closed: { 
+    closed: {
       x: '-100%',
       transition: { type: 'spring', stiffness: 300, damping: 30 }
     },
-    open: { 
+    open: {
       x: 0,
       transition: { type: 'spring', stiffness: 300, damping: 30 }
     },
@@ -133,7 +151,7 @@ export default function Header() {
           <div className="flex justify-between items-center h-full">
             {/* Logo */}
             <Link href="/main" className="flex items-center">
-              <motion.div 
+              <motion.div
                 className="text-2xl font-bold text-purple-700 dark:text-purple-400"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -199,26 +217,114 @@ export default function Header() {
               ))}
             </nav>
 
-            {/* Auth Buttons */}
+            {/* Auth Buttons or Profile Menu */}
             <div className="hidden md:flex items-center space-x-4">
-              <Link href="/auth/login">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-4 py-2 text-purple-600 dark:text-purple-400 border border-purple-600 dark:border-purple-400 rounded-full hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200"
-                >
-                  Login
-                </motion.button>
-              </Link>
-              <Link href="/auth/register">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-full hover:from-purple-700 hover:to-pink-600 transition-colors duration-200"
-                >
-                  Register
-                </motion.button>
-              </Link>
+              {isAuthenticated ? (
+                <div className="relative" ref={el => submenuRefs.current['profile'] = el}>
+                  <button
+                    onClick={() => toggleSubmenu('profile')}
+                    className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 font-medium transition-colors duration-200"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center overflow-hidden">
+                      {user?.profile_image ? (
+                        <img
+                          src={user.profile_image}
+                          alt="Profile"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <FiUser className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      )}
+                    </div>
+                    <span>{user?.first_name || 'User'}</span>
+                    <motion.span
+                      animate={{ rotate: activeSubmenu === 'profile' ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiChevronDown />
+                    </motion.span>
+                  </button>
+                  <AnimatePresence>
+                    {activeSubmenu === 'profile' && (
+                      <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        exit="hidden"
+                        variants={submenuVariants}
+                        className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-2 z-20 border border-gray-200 dark:border-gray-700"
+                      >
+                        <Link
+                          href={getDashboardLink()}
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
+                        >
+                          <FiUser className="mr-2 h-4 w-4" />
+                          Dashboard
+                        </Link>
+                        {user?.role === 'student' && (
+                          <>
+                            <Link
+                              href="/student/diaries"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
+                            >
+                              <FiBook className="mr-2 h-4 w-4" />
+                              My Diaries
+                            </Link>
+                            <Link
+                              href="/student/chats"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
+                            >
+                              <FiMessageSquare className="mr-2 h-4 w-4" />
+                              Chat with Tutor
+                            </Link>
+                            <Link
+                              href="/student/awards"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
+                            >
+                              <FiAward className="mr-2 h-4 w-4" />
+                              My Awards
+                            </Link>
+                          </>
+                        )}
+                        <Link
+                          href="/profile"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
+                        >
+                          <FiSettings className="mr-2 h-4 w-4" />
+                          Settings
+                        </Link>
+                        <button
+                          onClick={logout}
+                          className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
+                        >
+                          <FiLogOut className="mr-2 h-4 w-4" />
+                          Logout
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <>
+                  <Link href="/auth/login">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-4 py-2 text-purple-600 dark:text-purple-400 border border-purple-600 dark:border-purple-400 rounded-full hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200"
+                    >
+                      Login
+                    </motion.button>
+                  </Link>
+                  <Link href="/auth/register">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-full hover:from-purple-700 hover:to-pink-600 transition-colors duration-200"
+                    >
+                      Register
+                    </motion.button>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -319,16 +425,59 @@ export default function Header() {
                 ))}
               </nav>
               <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                <Link href="/auth/login">
-                  <button className="w-full px-4 py-2 text-purple-600 dark:text-purple-400 border border-purple-600 dark:border-purple-400 rounded-full hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200">
-                    Login
-                  </button>
-                </Link>
-                <Link href="/auth/register">
-                  <button className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-full hover:from-purple-700 hover:to-pink-600 transition-colors duration-200">
-                    Register
-                  </button>
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <div className="flex items-center space-x-2 mb-4">
+                      <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center overflow-hidden">
+                        {user?.profile_image ? (
+                          <img
+                            src={user.profile_image}
+                            alt="Profile"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <FiUser className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {user?.first_name} {user?.last_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1) || 'User'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <Link href={getDashboardLink()}>
+                      <button className="w-full flex items-center px-4 py-2 text-purple-600 dark:text-purple-400 border border-purple-600 dark:border-purple-400 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200">
+                        <FiUser className="mr-2 h-5 w-5" />
+                        Dashboard
+                      </button>
+                    </Link>
+
+                    <button
+                      onClick={logout}
+                      className="w-full flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-md hover:from-purple-700 hover:to-pink-600 transition-colors duration-200"
+                    >
+                      <FiLogOut className="mr-2 h-5 w-5" />
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/auth/login">
+                      <button className="w-full px-4 py-2 text-purple-600 dark:text-purple-400 border border-purple-600 dark:border-purple-400 rounded-full hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors duration-200">
+                        Login
+                      </button>
+                    </Link>
+                    <Link href="/auth/register">
+                      <button className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-full hover:from-purple-700 hover:to-pink-600 transition-colors duration-200">
+                        Register
+                      </button>
+                    </Link>
+                  </>
+                )}
               </div>
             </motion.div>
           </>
