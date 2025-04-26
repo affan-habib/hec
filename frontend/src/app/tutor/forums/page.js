@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FiSearch, FiMessageCircle, FiUser, FiClock, FiPlus, FiEye, FiMessageSquare, FiThumbsUp } from 'react-icons/fi';
+import { FiSearch, FiMessageCircle, FiUser, FiClock, FiPlus, FiEye, FiThumbsUp } from 'react-icons/fi';
 
 export default function TutorForumsPage() {
   const [topics, setTopics] = useState([]);
@@ -136,14 +136,14 @@ export default function TutorForumsPage() {
 
   // Filter topics based on search term and category
   const filteredTopics = topics.filter(topic => {
-    const matchesSearch = 
+    const matchesSearch =
       topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       topic.author.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = 
-      selectedCategory === 'all' || 
+
+    const matchesCategory =
+      selectedCategory === 'all' ||
       topic.category === selectedCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -325,7 +325,7 @@ export default function TutorForumsPage() {
                       {topic.views}
                     </div>
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <FiMessageSquare className="mr-1 h-4 w-4" />
+                      <FiMessageCircle className="mr-1 h-4 w-4" />
                       {topic.replies}
                     </div>
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">

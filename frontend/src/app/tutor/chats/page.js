@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { FiSearch, FiUser, FiSend, FiPaperclip, FiImage, FiFile } from 'react-icons/fi';
+import { FiSearch, FiUser, FiSend, FiPaperclip, FiImage, FiFile, FiMessageCircle } from 'react-icons/fi';
 
 export default function TutorChatsPage() {
   const [students, setStudents] = useState([]);
@@ -16,47 +16,47 @@ export default function TutorChatsPage() {
     // In a real app, you would fetch this data from your API
     // This is just mock data for demonstration
     const mockStudents = [
-      { 
-        id: 1, 
-        name: 'Jane Cooper', 
-        avatar: null, 
-        lastMessage: 'Thank you for your feedback!', 
+      {
+        id: 1,
+        name: 'Jane Cooper',
+        avatar: null,
+        lastMessage: 'Thank you for your feedback!',
         lastMessageTime: '10:30 AM',
         unread: 2,
         online: true
       },
-      { 
-        id: 2, 
-        name: 'Cody Fisher', 
-        avatar: null, 
-        lastMessage: 'When is our next session?', 
+      {
+        id: 2,
+        name: 'Cody Fisher',
+        avatar: null,
+        lastMessage: 'When is our next session?',
         lastMessageTime: 'Yesterday',
         unread: 0,
         online: false
       },
-      { 
-        id: 3, 
-        name: 'Esther Howard', 
-        avatar: null, 
-        lastMessage: 'I completed the homework.', 
+      {
+        id: 3,
+        name: 'Esther Howard',
+        avatar: null,
+        lastMessage: 'I completed the homework.',
         lastMessageTime: 'Yesterday',
         unread: 1,
         online: true
       },
-      { 
-        id: 4, 
-        name: 'Jenny Wilson', 
-        avatar: null, 
-        lastMessage: 'Can you help me with this grammar question?', 
+      {
+        id: 4,
+        name: 'Jenny Wilson',
+        avatar: null,
+        lastMessage: 'Can you help me with this grammar question?',
         lastMessageTime: 'Monday',
         unread: 0,
         online: false
       },
-      { 
-        id: 5, 
-        name: 'Kristin Watson', 
-        avatar: null, 
-        lastMessage: 'I will be late for our session tomorrow.', 
+      {
+        id: 5,
+        name: 'Kristin Watson',
+        avatar: null,
+        lastMessage: 'I will be late for our session tomorrow.',
         lastMessageTime: 'Aug 15',
         unread: 0,
         online: false
@@ -78,7 +78,7 @@ export default function TutorChatsPage() {
 
   const handleSelectStudent = (student) => {
     setSelectedStudent(student);
-    
+
     // In a real app, you would fetch messages for this student from your API
     // This is just mock data for demonstration
     const mockMessages = [
@@ -125,9 +125,9 @@ export default function TutorChatsPage() {
         timestamp: new Date(new Date().setHours(new Date().getHours() - 1, new Date().getMinutes() - 25))
       }
     ];
-    
+
     setMessages(mockMessages);
-    
+
     // Mark messages as read
     const updatedStudents = students.map(s => {
       if (s.id === student.id) {
@@ -140,14 +140,14 @@ export default function TutorChatsPage() {
 
   const handleSendMessage = () => {
     if (newMessage.trim() === '') return;
-    
+
     const newMsg = {
       id: messages.length + 1,
       sender: 'tutor',
       text: newMessage,
       timestamp: new Date()
     };
-    
+
     setMessages([...messages, newMsg]);
     setNewMessage('');
   };
@@ -157,7 +157,7 @@ export default function TutorChatsPage() {
   };
 
   // Filter students based on search term
-  const filteredStudents = students.filter(student => 
+  const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -186,7 +186,7 @@ export default function TutorChatsPage() {
               />
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -198,7 +198,7 @@ export default function TutorChatsPage() {
           ) : (
             <ul className="divide-y divide-gray-200 dark:divide-gray-700 overflow-y-auto max-h-[calc(100vh-16rem)]">
               {filteredStudents.map((student) => (
-                <li 
+                <li
                   key={student.id}
                   className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
                     selectedStudent?.id === student.id ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''
@@ -325,7 +325,7 @@ export default function TutorChatsPage() {
                     placeholder="Type a message..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => {
+                    onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         handleSendMessage();
                       }
@@ -344,7 +344,7 @@ export default function TutorChatsPage() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <div className="mx-auto h-16 w-16 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                  <FiMessageSquare className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+                  <FiMessageCircle className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
                   Select a student to start chatting
