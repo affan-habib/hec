@@ -10,6 +10,7 @@ import {
   FiPackage, FiSun
 } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
+import Cookies from 'js-cookie';
 
 const menuItems = [
   {
@@ -73,10 +74,10 @@ const Sidebar = ({ onToggle }) => {
   const pathname = usePathname();
   const { logout } = useAuth();
 
-  // Load sidebar state from localStorage on component mount
+  // Load sidebar state from cookies on component mount
   useEffect(() => {
     try {
-      const savedState = localStorage.getItem('sidebarCollapsed');
+      const savedState = Cookies.get('sidebarCollapsed');
       if (savedState !== null) {
         const collapsed = JSON.parse(savedState);
         setIsCollapsed(collapsed);
@@ -86,10 +87,10 @@ const Sidebar = ({ onToggle }) => {
     }
   }, []);
 
-  // Save sidebar state to localStorage when it changes and notify parent
+  // Save sidebar state to cookies when it changes and notify parent
   useEffect(() => {
     try {
-      localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed));
+      Cookies.set('sidebarCollapsed', JSON.stringify(isCollapsed), { expires: 7 }); // Expires in 7 days
     } catch (error) {
       console.error('Error saving sidebar state:', error);
     }

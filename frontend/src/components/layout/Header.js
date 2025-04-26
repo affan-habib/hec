@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiBell, FiUser, FiMoon, FiSun, FiSettings, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
+import Cookies from 'js-cookie';
 
 const Header = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -11,8 +12,8 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
-    // Check if dark mode is enabled in localStorage
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    // Check if dark mode is enabled in cookies
+    const isDarkMode = Cookies.get('darkMode') === 'true';
     setDarkMode(isDarkMode);
 
     // Apply dark mode class to document if enabled
@@ -26,7 +27,7 @@ const Header = () => {
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
+    Cookies.set('darkMode', newDarkMode.toString(), { expires: 7 }); // Expires in 7 days
 
     if (newDarkMode) {
       document.documentElement.classList.add('dark');

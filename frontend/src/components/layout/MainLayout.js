@@ -6,6 +6,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { useAuth } from '@/hooks/useAuth';
 import { hasRoutePermission, getUnauthorizedRedirect } from '@/utils/routePermissions';
+import Cookies from 'js-cookie';
 
 const MainLayout = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -14,9 +15,9 @@ const MainLayout = ({ children }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Load sidebar state from localStorage
+    // Load sidebar state from cookies
     try {
-      const savedState = localStorage.getItem('sidebarCollapsed');
+      const savedState = Cookies.get('sidebarCollapsed');
       if (savedState !== null) {
         setIsSidebarCollapsed(JSON.parse(savedState));
       }
