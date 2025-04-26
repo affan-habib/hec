@@ -135,8 +135,21 @@ router.get(
   '/',
   authenticate,
   [
-    query('public_only').optional().isBoolean().withMessage('Public only must be a boolean'),
-    query('user_id').optional().isInt().withMessage('User ID must be an integer'),
+    query('public_only')
+      .optional()
+      .custom(value => {
+        if (value === undefined || value === '') return true;
+        if (value === 'true' || value === 'false' || value === true || value === false) return true;
+        return false;
+      })
+      .withMessage('Public only must be a boolean'),
+    query('user_id')
+      .optional()
+      .custom(value => {
+        if (value === undefined || value === '') return true;
+        return !isNaN(parseInt(value));
+      })
+      .withMessage('User ID must be an integer'),
     query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be an integer between 1 and 100'),
     query('offset').optional().isInt({ min: 0 }).withMessage('Offset must be a non-negative integer')
   ],

@@ -1,4 +1,5 @@
-const Skin = require('../models/skin.model');
+const db = require('../models');
+const { Skin } = db;
 const { getPaginationParams, getPaginationMetadata } = require('../utils/pagination.utils');
 
 /**
@@ -46,8 +47,29 @@ const getAllSkins = async (req, res) => {
     const { public_only, user_id } = req.query;
 
     // Convert string parameters to appropriate types
-    const publicOnly = public_only === 'true';
-    const userId = user_id ? parseInt(user_id) : null;
+    let publicOnly = false;
+    let userId = null;
+
+    // Handle public_only parameter
+    if (public_only !== undefined && public_only !== '') {
+      publicOnly = public_only === 'true' || public_only === true;
+    }
+
+    // Handle user_id parameter
+    if (user_id !== undefined && user_id !== '') {
+      userId = parseInt(user_id);
+      if (isNaN(userId)) {
+        return res.status(400).json({
+          success: false,
+          errors: [
+            {
+              field: 'user_id',
+              message: 'User ID must be an integer'
+            }
+          ]
+        });
+      }
+    }
 
     // Get pagination parameters (null if pagination is disabled)
     const pagination = getPaginationParams(req.query);
