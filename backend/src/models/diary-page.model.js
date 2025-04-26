@@ -96,6 +96,11 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'skin_id',
       as: 'skin'
     });
+
+    DiaryPage.hasOne(models.DiaryFeedback, {
+      foreignKey: 'diary_page_id',
+      as: 'feedback'
+    });
   };
 
   // Class methods
@@ -111,11 +116,22 @@ module.exports = (sequelize, DataTypes) => {
     const options = {
       where: { diary_id: diaryId },
       order: [['page_number', 'ASC']],
-      include: [{
-        model: sequelize.models.Skin,
-        as: 'skin',
-        attributes: ['id', 'name', 'thumbnail', 'css_class']
-      }]
+      include: [
+        {
+          model: sequelize.models.Skin,
+          as: 'skin',
+          attributes: ['id', 'name', 'thumbnail', 'css_class']
+        },
+        {
+          model: sequelize.models.DiaryFeedback,
+          as: 'feedback',
+          include: [{
+            model: sequelize.models.User,
+            as: 'tutor',
+            attributes: ['id', 'first_name', 'last_name', 'email', 'profile_image']
+          }]
+        }
+      ]
     };
 
     // Apply pagination if limit is provided
@@ -136,11 +152,31 @@ module.exports = (sequelize, DataTypes) => {
   DiaryPage.findById = async function(id) {
     return await this.findOne({
       where: { id },
-      include: [{
-        model: sequelize.models.Skin,
-        as: 'skin',
-        attributes: ['id', 'name', 'thumbnail', 'css_class']
-      }]
+      include: [
+        {
+          model: sequelize.models.Skin,
+          as: 'skin',
+          attributes: ['id', 'name', 'thumbnail', 'css_class']
+        },
+        {
+          model: sequelize.models.DiaryFeedback,
+          as: 'feedback',
+          include: [{
+            model: sequelize.models.User,
+            as: 'tutor',
+            attributes: ['id', 'first_name', 'last_name', 'email', 'profile_image']
+          }]
+        },
+        {
+          model: sequelize.models.Diary,
+          as: 'diary',
+          include: [{
+            model: sequelize.models.User,
+            as: 'user',
+            attributes: ['id', 'first_name', 'last_name', 'email']
+          }]
+        }
+      ]
     });
   };
 
