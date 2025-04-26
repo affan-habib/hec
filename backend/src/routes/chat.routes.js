@@ -402,4 +402,76 @@ router.post(
   chatController.leaveChat
 );
 
+/**
+ * @swagger
+ * /api/chats/direct/{user_id}:
+ *   get:
+ *     summary: Find or create a direct chat with a user
+ *     description: |
+ *       For admin use only. Finds an existing direct chat with the specified user,
+ *       or creates a new one if none exists.
+ *     tags: [Chats]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID to chat with
+ *     responses:
+ *       200:
+ *         description: Existing chat found
+ *       201:
+ *         description: New chat created
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - only admins can use this endpoint
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+// Test endpoint to verify route is working
+router.get(
+  '/test-direct/:user_id',
+  authenticate,
+  isAdmin,
+  [
+    param('user_id').isInt().withMessage('User ID must be an integer')
+  ],
+  validate,
+  (req, res) => {
+    try {
+      return res.status(200).json({
+        success: true,
+        message: 'Test endpoint working',
+        params: req.params,
+        user: req.user
+      });
+    } catch (error) {
+      console.error('Test endpoint error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Test endpoint error',
+        error: error.message
+      });
+    }
+  }
+);
+
+// Original endpoint with improved error handling
+router.get(
+  '/direct/:user_id',
+  authenticate,
+  isAdmin,
+  [
+    param('user_id').isInt().withMessage('User ID must be an integer')
+  ],
+  validate,
+  chatController.findOrCreateDirectChat
+);
+
 module.exports = router;

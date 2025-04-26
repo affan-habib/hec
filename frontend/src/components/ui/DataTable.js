@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FiChevronLeft, FiChevronRight, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiEdit, FiTrash2, FiEye, FiMessageSquare } from 'react-icons/fi';
 
 const DataTable = ({
   data,
@@ -12,6 +12,7 @@ const DataTable = ({
   onEdit,
   onDelete,
   onView,
+  onMessage,
   isLoading,
   emptyMessage = 'No data available',
 }) => {
@@ -48,7 +49,7 @@ const DataTable = ({
                   {column.header}
                 </th>
               ))}
-              {onEdit || onDelete || onView ? (
+              {onEdit || onDelete || onView || onMessage ? (
                 <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6 text-right">
                   <span className="sr-only">Actions</span>
                   Actions
@@ -60,7 +61,7 @@ const DataTable = ({
             {isLoading ? (
               <tr>
                 <td
-                  colSpan={columns.length + (onEdit || onDelete || onView ? 1 : 0)}
+                  colSpan={columns.length + (onEdit || onDelete || onView || onMessage ? 1 : 0)}
                   className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 text-center"
                 >
                   <div className="flex justify-center items-center py-4">
@@ -72,7 +73,7 @@ const DataTable = ({
             ) : data.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (onEdit || onDelete || onView ? 1 : 0)}
+                  colSpan={columns.length + (onEdit || onDelete || onView || onMessage ? 1 : 0)}
                   className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 text-center"
                 >
                   {emptyMessage}
@@ -101,7 +102,7 @@ const DataTable = ({
                         : row[column.key]}
                     </td>
                   ))}
-                  {(onEdit || onDelete || onView) && (
+                  {(onEdit || onDelete || onView || onMessage) && (
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                       <div className="flex space-x-2 justify-end">
                         {onView && (
@@ -111,6 +112,7 @@ const DataTable = ({
                               onView(row);
                             }}
                             className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            title="View"
                           >
                             <FiEye className="h-4 w-4" />
                             <span className="sr-only">View</span>
@@ -123,9 +125,23 @@ const DataTable = ({
                               onEdit(row);
                             }}
                             className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            title="Edit"
                           >
                             <FiEdit className="h-4 w-4" />
                             <span className="sr-only">Edit</span>
+                          </button>
+                        )}
+                        {onMessage && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onMessage(row);
+                            }}
+                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                            title="Message"
+                          >
+                            <FiMessageSquare className="h-4 w-4" />
+                            <span className="sr-only">Message</span>
                           </button>
                         )}
                         {onDelete && (
@@ -135,6 +151,7 @@ const DataTable = ({
                               onDelete(row);
                             }}
                             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            title="Delete"
                           >
                             <FiTrash2 className="h-4 w-4" />
                             <span className="sr-only">Delete</span>

@@ -5,9 +5,12 @@ import { FiPlus, FiSearch, FiFilter, FiRefreshCw } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import DataTable from '@/components/ui/DataTable';
 import studentService from '@/services/studentService';
+import chatService from '@/services/chatService';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const StudentsPage = () => {
+  const router = useRouter();
   const [students, setStudents] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -22,6 +25,7 @@ const StudentsPage = () => {
     name: '',
     level: '',
   });
+  const [isMessageLoading, setIsMessageLoading] = useState(false);
 
   const fetchStudents = async (page = 1) => {
     setIsLoading(true);
@@ -126,6 +130,31 @@ const StudentsPage = () => {
     }
   };
 
+  const handleMessageStudent = async (student) => {
+    try {
+      setIsMessageLoading(true);
+      console.log('Starting chat with student:', student.id);
+
+      const response = await chatService.findOrCreateDirectChat(student.id);
+      console.log('Chat response:', response);
+
+      // Navigate to the chat page with the chat ID
+      if (response && response.data) {
+        console.log('Navigating to chat:', response.data.id);
+        // Use window.location for a full page navigation to ensure the page is fully reloaded
+        window.location.href = `/admin/chats/${response.data.id}`;
+      } else {
+        console.error('Invalid response from chat service:', response);
+        alert('Failed to create chat. Invalid response from server.');
+      }
+    } catch (error) {
+      console.error('Error creating chat with student:', error);
+      alert('Failed to create chat. Please try again.');
+    } finally {
+      setIsMessageLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -213,7 +242,8 @@ const StudentsPage = () => {
           onView={handleViewStudent}
           onEdit={handleEditStudent}
           onDelete={handleDeleteStudent}
-          isLoading={isLoading}
+          onMessage={handleMessageStudent}
+          isLoading={isLoading || isMessageLoading}
           emptyMessage="No students found. Try adjusting your filters or add a new student."
         />
       </div>

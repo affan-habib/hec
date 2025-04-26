@@ -5,6 +5,51 @@ const socketService = require('../services/socket.service');
 const { getPaginationParams, getPaginationMetadata, applyPagination } = require('../utils/pagination.utils');
 
 /**
+ * Format chat data for frontend
+ * @param {Object} chat - Chat object from database
+ * @param {Object} currentUser - Current user object
+ * @returns {Object} - Formatted chat object
+ */
+const formatChatForFrontend = (chat, currentUser) => {
+  // Find the other participant (not the current user)
+  const otherParticipant = chat.participants.find(p => p.id !== currentUser.id) || chat.participants[0] || {};
+
+  // Get the last message if available
+  const lastMessage = chat.messages && chat.messages.length > 0 ? chat.messages[0] : null;
+
+  return {
+    id: chat.id,
+    name: chat.name || `Chat with ${otherParticipant.first_name || 'User'}`,
+    is_group: chat.is_group,
+    created_at: chat.created_at,
+    updated_at: chat.updated_at,
+    // Format user data for the frontend
+    user: {
+      id: otherParticipant.id,
+      name: `${otherParticipant.first_name || ''} ${otherParticipant.last_name || ''}`.trim(),
+      avatar: otherParticipant.profile_image,
+      role: otherParticipant.role || 'user'
+    },
+    // Format last message data
+    last_message: lastMessage ? {
+      id: lastMessage.id,
+      content: lastMessage.content,
+      sender_id: lastMessage.sender_id,
+      timestamp: lastMessage.created_at,
+      is_read: true // Default to true for now
+    } : {
+      content: 'No messages yet',
+      timestamp: chat.created_at,
+      is_read: true
+    },
+    // Keep original data for reference
+    participants: chat.participants,
+    creator: chat.creator,
+    messages: chat.messages
+  };
+};
+
+/**
  * Get all chats for the current user
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -47,9 +92,12 @@ const getMyChats = async (req, res) => {
       }
     });
 
+    // Format chats for frontend
+    const formattedChats = chats.map(chat => formatChatForFrontend(chat, req.user));
+
     res.status(200).json({
       success: true,
-      data: chats
+      data: formattedChats
     });
   } catch (error) {
     console.error('Get my chats error:', error);
@@ -105,9 +153,12 @@ const getChatById = async (req, res) => {
       });
     }
 
+    // Format chat for frontend
+    const formattedChat = formatChatForFrontend(chat, req.user);
+
     res.status(200).json({
       success: true,
-      data: chat
+      data: formattedChat
     });
   } catch (error) {
     console.error('Get chat by ID error:', error);
@@ -799,6 +850,140 @@ const leaveChat = async (req, res) => {
   }
 };
 
+/**
+ * Find or create a direct chat with a user
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const findOrCreateDirectChat = async (req, res) => {
+  try {
+    console.log('Starting findOrCreateDirectChat function');
+    const { user_id } = req.params;
+    const adminId = req.user.id;
+
+    console.log(`Request params: user_id=${user_id}, adminId=${adminId}, adminRole=${req.user.role}`);
+
+    // Validate that the current user is an admin
+    if (req.user.role !== 'admin') {
+      console.log('User is not an admin, returning 403');
+      return res.status(403).json({
+        success: false,
+        message: 'Only admins can use this endpoint'
+      });
+    }
+
+    // Check if the user exists - simplified approach
+    try {
+      console.log(`Checking if user ${user_id} exists`);
+      const targetUser = await User.findByPk(user_id);
+
+      if (!targetUser) {
+        console.log(`User ${user_id} not found, returning 404`);
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      console.log(`User found: ${targetUser.first_name} ${targetUser.last_name}`);
+
+      // Simplified approach - create a new chat directly
+      console.log('Creating a new chat directly');
+
+      // Create chat
+      const chat = await Chat.create({
+        name: `Chat with ${targetUser.first_name}`,
+        is_group: false,
+        created_by: adminId
+      });
+
+      console.log(`Chat created with ID: ${chat.id}`);
+
+      // Add participants using direct SQL to avoid model issues
+      console.log('Adding participants');
+
+      // Add admin with created_at and updated_at timestamps
+      await db.sequelize.query(
+        `INSERT INTO chat_participants (chat_id, user_id, created_at, updated_at) VALUES (?, ?, NOW(), NOW())`,
+        {
+          replacements: [chat.id, adminId]
+        }
+      );
+
+      // Add target user with created_at and updated_at timestamps
+      await db.sequelize.query(
+        `INSERT INTO chat_participants (chat_id, user_id, created_at, updated_at) VALUES (?, ?, NOW(), NOW())`,
+        {
+          replacements: [chat.id, parseInt(user_id)]
+        }
+      );
+
+      // Add initial message
+      console.log('Adding initial message');
+      await Message.create({
+        chat_id: chat.id,
+        sender_id: adminId,
+        content: `Hello ${targetUser.first_name}, how can I help you today?`
+      });
+
+      // Fetch the complete chat with participants and messages
+      const completeChat = await Chat.findByPk(chat.id, {
+        include: [
+          {
+            model: User,
+            as: 'participants',
+            attributes: ['id', 'first_name', 'last_name', 'profile_image', 'role'],
+            through: { attributes: [] }
+          },
+          {
+            model: User,
+            as: 'creator',
+            attributes: ['id', 'first_name', 'last_name']
+          },
+          {
+            model: Message,
+            as: 'messages',
+            limit: 1,
+            order: [['created_at', 'DESC']],
+            include: [
+              {
+                model: User,
+                as: 'sender',
+                attributes: ['id', 'first_name', 'last_name']
+              }
+            ]
+          }
+        ]
+      });
+
+      // Format chat for frontend
+      const formattedChat = formatChatForFrontend(completeChat, req.user);
+
+      // Return success
+      return res.status(201).json({
+        success: true,
+        message: 'Chat created successfully',
+        data: formattedChat
+      });
+
+    } catch (userError) {
+      console.error('Error in user lookup or chat creation:', userError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error finding user or creating chat',
+        error: userError.message
+      });
+    }
+  } catch (error) {
+    console.error('Find or create direct chat error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error in direct chat function',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getMyChats,
   getChatById,
@@ -807,5 +992,6 @@ module.exports = {
   addParticipant,
   removeParticipant,
   sendMessage,
-  leaveChat
+  leaveChat,
+  findOrCreateDirectChat
 };

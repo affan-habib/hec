@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { use } from 'react';
 import ChatInterface from '@/components/shared/ChatInterface';
 
 export default function StudentChatDetailPage({ params }) {
-  const chatId = params.id;
+  // Use React.use() to unwrap the params promise
+  const unwrappedParams = use(params);
+  const chatId = unwrappedParams.id;
+
+  console.log('Student Chat Detail Page - Chat ID:', chatId);
 
   return (
     <div className="h-[calc(100vh-6rem)]">

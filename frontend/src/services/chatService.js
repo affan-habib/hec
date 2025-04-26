@@ -54,6 +54,32 @@ class ChatService extends ApiService {
       throw error;
     }
   }
+
+  // Get chat by ID
+  async getById(id) {
+    try {
+      console.log(`Fetching chat with ID: ${id}`);
+      const response = await this.custom('get', `/${id}`);
+      console.log('Chat response:', response);
+      return response;
+    } catch (error) {
+      console.error(`Error fetching chat with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Find or create a direct chat with a user (for admin use)
+  async findOrCreateDirectChat(userId) {
+    try {
+      console.log(`Finding or creating direct chat with user ID: ${userId}`);
+      const response = await this.custom('get', `/direct/${userId}`);
+      console.log('Direct chat response:', response);
+      return response;
+    } catch (error) {
+      console.error(`Error finding/creating direct chat with user ID ${userId}:`, error);
+      throw error;
+    }
+  }
 }
 
 export default new ChatService();

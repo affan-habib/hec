@@ -1,9 +1,14 @@
 'use client';
 
+import { use } from 'react';
 import ChatInterface from '@/components/shared/ChatInterface';
 
 export default function AdminChatDetailPage({ params }) {
-  const chatId = params.id;
+  // Use React.use() to unwrap the params promise
+  const unwrappedParams = use(params);
+  const chatId = unwrappedParams.id;
+
+  console.log('Admin Chat Detail Page - Chat ID:', chatId);
 
   return (
     <div className="h-[calc(100vh-6rem)]">

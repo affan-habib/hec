@@ -5,9 +5,12 @@ import { FiPlus, FiSearch, FiFilter, FiRefreshCw } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import DataTable from '@/components/ui/DataTable';
 import tutorService from '@/services/tutorService';
+import chatService from '@/services/chatService';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const TutorsPage = () => {
+  const router = useRouter();
   const [tutors, setTutors] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -24,6 +27,7 @@ const TutorsPage = () => {
     min_experience: '',
     max_hourly_rate: '',
   });
+  const [isMessageLoading, setIsMessageLoading] = useState(false);
 
   const fetchTutors = async (page = 1) => {
     setIsLoading(true);
@@ -156,6 +160,31 @@ const TutorsPage = () => {
     }
   };
 
+  const handleMessageTutor = async (tutor) => {
+    try {
+      setIsMessageLoading(true);
+      console.log('Starting chat with tutor:', tutor.id);
+
+      const response = await chatService.findOrCreateDirectChat(tutor.id);
+      console.log('Chat response:', response);
+
+      // Navigate to the chat page with the chat ID
+      if (response && response.data) {
+        console.log('Navigating to chat:', response.data.id);
+        // Use window.location for a full page navigation to ensure the page is fully reloaded
+        window.location.href = `/admin/chats/${response.data.id}`;
+      } else {
+        console.error('Invalid response from chat service:', response);
+        alert('Failed to create chat. Invalid response from server.');
+      }
+    } catch (error) {
+      console.error('Error creating chat with tutor:', error);
+      alert('Failed to create chat. Please try again.');
+    } finally {
+      setIsMessageLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -277,7 +306,8 @@ const TutorsPage = () => {
           onView={handleViewTutor}
           onEdit={handleEditTutor}
           onDelete={handleDeleteTutor}
-          isLoading={isLoading}
+          onMessage={handleMessageTutor}
+          isLoading={isLoading || isMessageLoading}
           emptyMessage="No tutors found. Try adjusting your filters or add a new tutor."
         />
       </div>

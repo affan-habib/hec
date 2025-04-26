@@ -27,26 +27,36 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
 
       setLoading(true);
       try {
+        console.log('Fetching chats, selectedChatId:', selectedChatId);
+
         // Get chats from API
         const response = await chatService.getAll();
 
         if (response.success) {
           let filteredChats = response.data || [];
+          console.log('Fetched chats:', filteredChats.length, filteredChats);
 
           // Apply search filter if any
           if (searchTerm) {
-            filteredChats = filteredChats.filter(chat =>
-              chat.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              (chat.last_message && chat.last_message.content.toLowerCase().includes(searchTerm.toLowerCase()))
-            );
+            filteredChats = filteredChats.filter(chat => {
+              const userName = chat.user?.name || '';
+              const messageContent = chat.last_message?.content || '';
+
+              return userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                     messageContent.toLowerCase().includes(searchTerm.toLowerCase());
+            });
           }
 
           setChats(filteredChats);
 
           // If a chat ID is provided, select that chat
           if (selectedChatId) {
-            const chat = filteredChats.find(c => c.id === parseInt(selectedChatId));
+            console.log('Looking for chat with ID:', selectedChatId);
+            const chatId = parseInt(selectedChatId);
+            const chat = filteredChats.find(c => c.id === chatId);
+
             if (chat) {
+              console.log('Found chat, selecting:', chat.id);
               setSelectedChat(chat);
 
               // Mark messages as read
@@ -54,6 +64,21 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
                 await chatService.markAsRead(chat.id);
               } catch (readError) {
                 console.error('Error marking messages as read:', readError);
+              }
+            } else {
+              console.log('Chat not found in list, fetching directly');
+
+              // If chat not found in the list, try to fetch it directly
+              try {
+                const chatResponse = await chatService.getById(chatId);
+                if (chatResponse.success && chatResponse.data) {
+                  console.log('Fetched chat directly:', chatResponse.data);
+                  setSelectedChat(chatResponse.data);
+                } else {
+                  console.error('Failed to fetch chat directly:', chatResponse.message);
+                }
+              } catch (chatError) {
+                console.error('Error fetching chat directly:', chatError);
               }
             }
           }
@@ -74,17 +99,22 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
 
   // Fetch messages when a chat is selected
   useEffect(() => {
-    if (selectedChat) {
+    if (selectedChat && selectedChat.id) {
+      console.log('Fetching messages for chat ID:', selectedChat.id);
+
       const fetchMessages = async () => {
         try {
           // Get messages from API
           const response = await chatService.getChatMessages(selectedChat.id);
+          console.log('Messages response:', response);
 
-          if (response.success) {
-            setMessages(response.data || []);
+          if (response && response.success) {
+            const messageData = response.data?.messages || [];
+            console.log(`Fetched ${messageData.length} messages`);
+            setMessages(messageData);
             setTimeout(scrollToBottom, 100);
           } else {
-            console.error('Failed to fetch messages:', response.message);
+            console.error('Failed to fetch messages:', response?.message || 'Unknown error');
             setMessages([]);
           }
         } catch (error) {
@@ -93,7 +123,15 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
         }
       };
 
-      fetchMessages();
+      // If the chat already has messages, use them
+      if (selectedChat.messages && selectedChat.messages.length > 0) {
+        console.log('Using messages from chat object:', selectedChat.messages.length);
+        setMessages(selectedChat.messages);
+        setTimeout(scrollToBottom, 100);
+      } else {
+        // Otherwise fetch messages
+        fetchMessages();
+      }
 
       // Set up polling for new messages
       const intervalId = setInterval(fetchMessages, 10000); // Poll every 10 seconds
@@ -101,6 +139,8 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
       return () => {
         clearInterval(intervalId); // Clean up on unmount or when chat changes
       };
+    } else {
+      console.log('No valid chat selected, skipping message fetch');
     }
   }, [selectedChat]);
 
@@ -183,14 +223,28 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
 
   // Group messages by date
   const groupMessagesByDate = () => {
+    if (!messages || messages.length === 0) {
+      return [];
+    }
+
     const groups = {};
     messages.forEach(message => {
-      const date = new Date(message.timestamp).toDateString();
-      if (!groups[date]) {
-        groups[date] = [];
+      if (!message || !message.timestamp) {
+        console.warn('Invalid message or missing timestamp:', message);
+        return;
       }
-      groups[date].push(message);
+
+      try {
+        const date = new Date(message.timestamp).toDateString();
+        if (!groups[date]) {
+          groups[date] = [];
+        }
+        groups[date].push(message);
+      } catch (error) {
+        console.error('Error processing message timestamp:', error, message);
+      }
     });
+
     return Object.entries(groups).map(([date, messages]) => ({
       date,
       messages
@@ -231,8 +285,12 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
                   <div className="px-4 py-3 flex items-start">
                     <div className="flex-shrink-0 mr-3">
                       <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                        {chat.user.avatar ? (
-                          <img src={chat.user.avatar} alt={chat.user.name} className="h-10 w-10 rounded-full" />
+                        {chat.user && chat.user.avatar ? (
+                          <img
+                            src={chat.user.avatar}
+                            alt={chat.user?.name || 'User'}
+                            className="h-10 w-10 rounded-full"
+                          />
                         ) : (
                           <FiUser />
                         )}
@@ -241,14 +299,20 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
                     <div className="min-w-0 flex-1">
                       <div className="flex justify-between">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {chat.user.name}
+                          {chat.user?.name || 'Chat User'}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(chat.last_message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {chat.last_message?.timestamp ?
+                            new Date(chat.last_message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
+                            ''}
                         </p>
                       </div>
-                      <p className={`text-sm truncate ${chat.last_message.is_read ? 'text-gray-500 dark:text-gray-400' : 'font-semibold text-gray-900 dark:text-white'}`}>
-                        {chat.last_message.content}
+                      <p className={`text-sm truncate ${
+                        chat.last_message?.is_read ?
+                          'text-gray-500 dark:text-gray-400' :
+                          'font-semibold text-gray-900 dark:text-white'
+                      }`}>
+                        {chat.last_message?.content || 'No messages yet'}
                       </p>
                     </div>
                   </div>
@@ -285,8 +349,12 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
               </button>
               <div className="flex-shrink-0 mr-3">
                 <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                  {selectedChat.user.avatar ? (
-                    <img src={selectedChat.user.avatar} alt={selectedChat.user.name} className="h-10 w-10 rounded-full" />
+                  {selectedChat.user && selectedChat.user.avatar ? (
+                    <img
+                      src={selectedChat.user.avatar}
+                      alt={selectedChat.user.name || 'User'}
+                      className="h-10 w-10 rounded-full"
+                    />
                   ) : (
                     <FiUser />
                   )}
@@ -294,76 +362,92 @@ const ChatInterface = ({ selectedChatId = null, userType = 'student' }) => {
               </div>
               <div>
                 <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                  {selectedChat.user.name}
+                  {selectedChat.user && selectedChat.user.name ? selectedChat.user.name : 'Chat User'}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {selectedChat.user.role === 'student' ? 'Student' : 'Tutor'}
+                  {selectedChat.user && selectedChat.user.role === 'student' ? 'Student' : 'Tutor'}
                 </p>
               </div>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
-              {groupMessagesByDate().map((group, groupIndex) => (
-                <div key={groupIndex} className="mb-6">
-                  <div className="flex justify-center mb-4">
-                    <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-xs text-gray-600 dark:text-gray-300">
-                      {formatMessageDate(group.messages[0].timestamp)}
-                    </span>
-                  </div>
-                  {group.messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex mb-4 ${message.sender_role === userType ? 'justify-end' : 'justify-start'}`}
-                    >
-                      {message.sender_role !== userType && (
-                        <div className="flex-shrink-0 mr-3 self-end">
-                          <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                            <FiUser size={14} />
-                          </div>
-                        </div>
-                      )}
-                      <div
-                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                          message.sender_role === userType
-                            ? message.failed
-                              ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-                              : message.pending
-                                ? 'bg-indigo-400 text-white'
-                                : 'bg-indigo-600 text-white'
-                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
-                        }`}
-                      >
-                        <p className="text-sm">{message.content}</p>
-                        <div className={`flex justify-end items-center mt-1 text-xs ${
-                          message.sender_role === userType
-                            ? message.failed
-                              ? 'text-red-600 dark:text-red-400'
-                              : message.pending
-                                ? 'text-indigo-100'
-                                : 'text-indigo-200'
-                            : 'text-gray-500 dark:text-gray-400'
-                        }`}>
-                          {message.failed && (
-                            <span className="mr-1">Failed to send</span>
-                          )}
-                          {message.pending && (
-                            <span className="mr-1">Sending...</span>
-                          )}
-                          <span>{formatTimestamp(message.timestamp)}</span>
-                        </div>
-                      </div>
-                      {message.sender_role === userType && (
-                        <div className="flex-shrink-0 ml-3 self-end">
-                          <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white">
-                            {user?.first_name ? user.first_name[0] : <FiUser size={14} />}
-                          </div>
-                        </div>
-                      )}
+              {messages.length > 0 ? (
+                groupMessagesByDate().map((group, groupIndex) => (
+                  <div key={groupIndex} className="mb-6">
+                    <div className="flex justify-center mb-4">
+                      <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-xs text-gray-600 dark:text-gray-300">
+                        {formatMessageDate(group.messages[0]?.timestamp || new Date())}
+                      </span>
                     </div>
-                  ))}
+                    {group.messages.map((message) => (
+                      <div
+                        key={message.id || `temp-${Math.random()}`}
+                        className={`flex mb-4 ${message.sender_role === userType ? 'justify-end' : 'justify-start'}`}
+                      >
+                        {message.sender_role !== userType && (
+                          <div className="flex-shrink-0 mr-3 self-end">
+                            <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                              <FiUser size={14} />
+                            </div>
+                          </div>
+                        )}
+                        <div
+                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                            message.sender_role === userType
+                              ? message.failed
+                                ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                                : message.pending
+                                  ? 'bg-indigo-400 text-white'
+                                  : 'bg-indigo-600 text-white'
+                              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                          }`}
+                        >
+                          <p className="text-sm">{message.content || 'No content'}</p>
+                          <div className={`flex justify-end items-center mt-1 text-xs ${
+                            message.sender_role === userType
+                              ? message.failed
+                                ? 'text-red-600 dark:text-red-400'
+                                : message.pending
+                                  ? 'text-indigo-100'
+                                  : 'text-indigo-200'
+                              : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                            {message.failed && (
+                              <span className="mr-1">Failed to send</span>
+                            )}
+                            {message.pending && (
+                              <span className="mr-1">Sending...</span>
+                            )}
+                            <span>{formatTimestamp(message.timestamp || new Date())}</span>
+                          </div>
+                        </div>
+                        {message.sender_role === userType && (
+                          <div className="flex-shrink-0 ml-3 self-end">
+                            <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white">
+                              {user?.first_name ? user.first_name[0] : <FiUser size={14} />}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ))
+              ) : (
+                <div className="flex justify-center items-center h-full">
+                  <div className="text-center">
+                    <div className="mx-auto h-16 w-16 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                      <FiMessageCircle className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
+                      No messages yet
+                    </h3>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                      Start the conversation by sending a message below
+                    </p>
+                  </div>
                 </div>
-              ))}
+              )}
               <div ref={messagesEndRef} />
             </div>
 
