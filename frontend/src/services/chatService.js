@@ -80,6 +80,19 @@ class ChatService extends ApiService {
       throw error;
     }
   }
+
+  // Mark messages in a chat as read
+  async markAsRead(chatId) {
+    try {
+      console.log(`Marking messages as read for chat ID: ${chatId}`);
+      const response = await this.custom('post', `/${chatId}/read`);
+      console.log('Mark as read response:', response);
+      return response;
+    } catch (error) {
+      console.error(`Error marking messages as read for chat ID ${chatId}:`, error);
+      throw error;
+    }
+  }
 }
 
 export default new ChatService();

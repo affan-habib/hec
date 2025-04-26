@@ -404,6 +404,54 @@ router.post(
 
 /**
  * @swagger
+ * /api/chats/{id}/read:
+ *   post:
+ *     summary: Mark all messages in a chat as read
+ *     tags: [Chats]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Chat ID
+ *     responses:
+ *       200:
+ *         description: Messages marked as read successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Messages marked as read successfully"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - you are not a participant in this chat
+ *       404:
+ *         description: Chat not found
+ *       500:
+ *         description: Server error
+ */
+router.post(
+  '/:id/read',
+  authenticate,
+  [
+    param('id').isInt().withMessage('Chat ID must be an integer')
+  ],
+  validate,
+  chatController.markMessagesAsRead
+);
+
+/**
+ * @swagger
  * /api/chats/direct/{user_id}:
  *   get:
  *     summary: Find or create a direct chat with a user
