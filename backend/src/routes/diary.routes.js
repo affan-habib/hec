@@ -269,6 +269,72 @@ router.put(
 
 /**
  * @swagger
+ * /api/diaries/{id}/assign-tutor:
+ *   put:
+ *     summary: Assign a tutor to a diary
+ *     tags: [Diaries]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Diary ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               tutor_id:
+ *                 type: integer
+ *                 description: Tutor ID (set to null to remove tutor assignment)
+ *             required:
+ *               - tutor_id
+ *     responses:
+ *       200:
+ *         description: Tutor assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Tutor assigned successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     diary:
+ *                       $ref: '#/components/schemas/Diary'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Diary or tutor not found
+ *       500:
+ *         description: Server error
+ */
+router.put(
+  '/:id/assign-tutor',
+  authenticate,
+  [
+    param('id').isInt().withMessage('ID must be an integer'),
+    body('tutor_id').optional({ nullable: true }).isInt().withMessage('Tutor ID must be an integer')
+  ],
+  validate,
+  diaryController.assignTutor
+);
+
+/**
+ * @swagger
  * /api/diaries/{id}:
  *   delete:
  *     summary: Delete a diary

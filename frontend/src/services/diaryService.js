@@ -53,6 +53,16 @@ class DiaryService extends ApiService {
       throw error;
     }
   }
+
+  // Assign tutor to diary
+  async assignTutor(diaryId, tutorId) {
+    try {
+      const response = await api.put(`/${diaryId}/assign-tutor`, { tutor_id: tutorId });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default new DiaryService();

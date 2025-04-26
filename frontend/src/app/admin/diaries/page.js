@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FiPlus, FiSearch, FiRefreshCw, FiUser, FiCalendar, FiBook } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiRefreshCw, FiUser, FiCalendar, FiBook, FiUserPlus } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import DataTable from '@/components/ui/DataTable';
 import diaryService from '@/services/diaryService';
+import TutorAssignmentModal from '@/components/modals/TutorAssignmentModal';
 
 const DiariesPage = () => {
   const router = useRouter();
@@ -25,6 +26,8 @@ const DiariesPage = () => {
     student_id: '',
     tutor_id: '',
   });
+  const [showTutorModal, setShowTutorModal] = useState(false);
+  const [selectedDiary, setSelectedDiary] = useState(null);
 
   const fetchDiaries = async (page = 1) => {
     setIsLoading(true);
@@ -36,12 +39,12 @@ const DiariesPage = () => {
       };
 
       const response = await diaryService.getAll(params);
-      
+
       if (response.success && response.data) {
         // Handle the response structure from the backend
         if (Array.isArray(response.data.diaries)) {
           setDiaries(response.data.diaries);
-          
+
           // Extract pagination data
           const paginationData = response.data.pagination || {};
           setPagination({
@@ -127,8 +130,8 @@ const DiariesPage = () => {
         <div className="flex items-center">
           <FiUser className="mr-2 text-green-500" />
           <span>
-            {row.student ? 
-              `${row.student.first_name} ${row.student.last_name}` : 
+            {row.student ?
+              `${row.student.first_name} ${row.student.last_name}` :
               'Unknown Student'}
           </span>
         </div>
@@ -138,13 +141,25 @@ const DiariesPage = () => {
       key: 'tutor',
       header: 'Tutor',
       render: (value, row) => (
-        <div className="flex items-center">
-          <FiUser className="mr-2 text-blue-500" />
-          <span>
-            {row.tutor ? 
-              `${row.tutor.first_name} ${row.tutor.last_name}` : 
-              'Unassigned'}
-          </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <FiUser className="mr-2 text-blue-500" />
+            <span>
+              {row.tutor ?
+                `${row.tutor.first_name} ${row.tutor.last_name}` :
+                'Unassigned'}
+            </span>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAssignTutor(row);
+            }}
+            className="ml-2 p-1 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+            title={row.tutor ? "Change Tutor" : "Assign Tutor"}
+          >
+            <FiUserPlus className="h-4 w-4" />
+          </button>
         </div>
       ),
     },
@@ -187,6 +202,16 @@ const DiariesPage = () => {
         alert('Failed to delete diary. Please try again.');
       }
     }
+  };
+
+  const handleAssignTutor = (diary) => {
+    setSelectedDiary(diary);
+    setShowTutorModal(true);
+  };
+
+  const handleTutorAssigned = (updatedDiary) => {
+    // Update the diary in the list
+    setDiaries(diaries.map(d => d.id === updatedDiary.id ? { ...d, tutor: updatedDiary.tutor } : d));
   };
 
   return (
@@ -284,6 +309,15 @@ const DiariesPage = () => {
           onDelete={handleDeleteDiary}
           isLoading={isLoading}
           emptyMessage="No diaries found. Try adjusting your filters or add a new diary."
+        />
+
+        {/* Tutor Assignment Modal */}
+        <TutorAssignmentModal
+          isOpen={showTutorModal}
+          onClose={() => setShowTutorModal(false)}
+          diaryId={selectedDiary?.id}
+          currentTutorId={selectedDiary?.tutor?.id}
+          onAssign={handleTutorAssigned}
         />
       </div>
     </div>

@@ -234,10 +234,125 @@ const deleteDiary = async (req, res) => {
   }
 };
 
+/**
+ * Assign a tutor to a diary
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const assignTutor = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tutor_id } = req.body;
+
+    // Check if diary exists
+    const existingDiary = await Diary.findById(parseInt(id));
+
+    if (!existingDiary) {
+      return res.status(404).json({
+        success: false,
+        message: 'Diary not found'
+      });
+    }
+
+    // Check if user has permission to update the diary
+    if (existingDiary.user_id !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to update this diary'
+      });
+    }
+
+    // If tutor_id is provided, check if tutor exists
+    if (tutor_id !== null) {
+      const tutor = await db.User.findOne({
+        where: {
+          id: tutor_id,
+          role: 'tutor'
+        }
+      });
+
+      if (!tutor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Tutor not found'
+        });
+      }
+    }
+
+    // Update the diary with the tutor_id
+    // Note: We need to add tutor_id to the Diary model first
+    await db.sequelize.query(
+      `UPDATE diaries SET tutor_id = ?, updated_at = NOW() WHERE id = ?`,
+      {
+        replacements: [tutor_id, id]
+      }
+    );
+
+    // Get the updated diary with tutor information
+    const updatedDiary = await db.sequelize.query(
+      `SELECT d.*,
+        u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name, u.email as user_email,
+        t.id as tutor_id, t.first_name as tutor_first_name, t.last_name as tutor_last_name, t.email as tutor_email
+      FROM diaries d
+      LEFT JOIN users u ON d.user_id = u.id
+      LEFT JOIN users t ON d.tutor_id = t.id
+      WHERE d.id = ?`,
+      {
+        replacements: [id],
+        type: db.sequelize.QueryTypes.SELECT
+      }
+    );
+
+    if (!updatedDiary || updatedDiary.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Diary not found after update'
+      });
+    }
+
+    // Format the response
+    const diary = updatedDiary[0];
+    const formattedDiary = {
+      id: diary.id,
+      title: diary.title,
+      description: diary.description,
+      is_public: diary.is_public,
+      created_at: diary.created_at,
+      updated_at: diary.updated_at,
+      user: {
+        id: diary.user_id,
+        first_name: diary.user_first_name,
+        last_name: diary.user_last_name,
+        email: diary.user_email
+      },
+      tutor: diary.tutor_id ? {
+        id: diary.tutor_id,
+        first_name: diary.tutor_first_name,
+        last_name: diary.tutor_last_name,
+        email: diary.tutor_email
+      } : null
+    };
+
+    res.status(200).json({
+      success: true,
+      message: tutor_id ? 'Tutor assigned successfully' : 'Tutor unassigned successfully',
+      data: formattedDiary
+    });
+  } catch (error) {
+    console.error('Assign tutor error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error assigning tutor',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createDiary,
   getAllDiaries,
   getDiaryById,
   updateDiary,
-  deleteDiary
+  deleteDiary,
+  assignTutor
 };
