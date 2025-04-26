@@ -24,7 +24,11 @@ const SkinDetailPage = ({ params }) => {
         const response = await skinService.getById(id);
 
         if (response.success && response.data) {
-          setSkin(response.data);
+          // Handle different response formats
+          const skinData = response.data.skin || response.data;
+
+          // Ensure we have the skin data in the expected format
+          setSkin(skinData);
         } else {
           setError('Failed to load skin data. Please try again.');
         }

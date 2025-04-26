@@ -24,7 +24,14 @@ const EditSkinPage = ({ params }) => {
         const response = await skinService.getById(id);
 
         if (response.success && response.data) {
-          setSkin(response.data);
+          // Handle different response formats
+          const skinData = response.data.skin || response.data;
+
+          // Log the data to help with debugging
+          console.log('Skin data received:', skinData);
+
+          // Ensure we have the skin data in the expected format
+          setSkin(skinData);
         } else {
           setError('Failed to load skin data. Please try again.');
         }
@@ -50,7 +57,16 @@ const EditSkinPage = ({ params }) => {
     setError('');
 
     try {
-      const response = await skinService.update(id, values);
+      // Preserve the theme_data from the original skin
+      const updateData = {
+        ...values,
+        // Keep the original theme_data if it exists
+        theme_data: skin.theme_data || {}
+      };
+
+      console.log('Submitting update with data:', updateData);
+
+      const response = await skinService.update(id, updateData);
 
       if (response.success) {
         router.push(`/admin/skins/${id}`);
