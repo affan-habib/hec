@@ -102,6 +102,9 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const { token, user } = await authService.login(email, password);
 
+      // Log the login response for debugging
+      console.log('Login response:', { token, user });
+
       // Save token to cookies
       Cookies.set('token', token, { expires: 7 }); // Expires in 7 days
 

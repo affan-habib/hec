@@ -101,6 +101,9 @@ const authService = {
 
       // Store the user data in cookies as a fallback
       if (response.data && response.data.data) {
+        // Log the user data from API for debugging
+        console.log('User data from API:', response.data.data);
+
         Cookies.set('user', JSON.stringify(response.data.data), { expires: 7 }); // Expires in 7 days
       }
 
