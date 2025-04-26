@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { FiBell, FiUser, FiMoon, FiSun, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiBell, FiUser, FiMoon, FiSun, FiSettings, FiLogOut, FiMessageCircle } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
 import Cookies from 'js-cookie';
+import ChatPreview from '@/components/shared/ChatPreview';
 
 // Function to get the appropriate profile path based on user role
 const getProfilePathByRole = (user) => {
@@ -42,6 +43,8 @@ const Header = () => {
   const [darkMode, setDarkMode] = useState(false);
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [chatDropdownOpen, setChatDropdownOpen] = useState(false);
+  const chatDropdownRef = useRef(null);
 
   useEffect(() => {
     // Check if dark mode is enabled in cookies
@@ -54,6 +57,20 @@ const Header = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+  }, []);
+
+  // Handle click outside to close chat dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (chatDropdownRef.current && !chatDropdownRef.current.contains(event.target)) {
+        setChatDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const toggleDarkMode = () => {
@@ -90,6 +107,26 @@ const Header = () => {
             >
               {darkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
             </button>
+
+            {/* Chat */}
+            <div className="relative" ref={chatDropdownRef}>
+              <button
+                onClick={() => setChatDropdownOpen(!chatDropdownOpen)}
+                className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 relative"
+                aria-label="View messages"
+              >
+                <FiMessageCircle size={20} />
+                {/* Unread indicator - this would be dynamic based on actual unread count */}
+                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-800"></span>
+              </button>
+
+              {/* Chat Dropdown */}
+              {chatDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                  <ChatPreview onClose={() => setChatDropdownOpen(false)} />
+                </div>
+              )}
+            </div>
 
             {/* Notifications */}
             <button
