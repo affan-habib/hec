@@ -301,7 +301,7 @@ const CommonSidebar = ({ onToggle }) => {
     >
       <div className="flex flex-col h-full">
         {/* Sidebar Header */}
-        <div className="py-5 px-4 border-b border-gray-700 flex items-center justify-between">
+        <div className="h-16 px-4 border-b border-gray-700 flex items-center justify-between">
           {!isCollapsed ? (
             <div>
               <h1 className="text-sm font-bold text-white">
