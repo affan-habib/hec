@@ -3,6 +3,9 @@
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/hooks/useAuth';
+import { Provider } from 'react-redux';
+import { store } from '@/redux/store';
+
 const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({ children }) {
@@ -13,9 +16,11 @@ export default function RootLayout({ children }) {
         <meta name="description" content="Admin panel for Hello English Coaching" />
       </head>
       <body className={inter.className}>
-        <AuthProvider>
-          <div>{children}</div>
-        </AuthProvider>
+        <Provider store={store}>
+          <AuthProvider>
+            <div>{children}</div>
+          </AuthProvider>
+        </Provider>
       </body>
     </html>
   );

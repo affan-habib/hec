@@ -1,30 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useAuth } from '@/hooks/useAuth';
 import { hasRoutePermission, getUnauthorizedRedirect } from '@/utils/routePermissions';
-import Cookies from 'js-cookie';
+import { useSelector } from 'react-redux';
+import { selectSidebarState } from '@/redux/slices/sidebarSlice';
 
 const MainLayout = ({ children }) => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const isSidebarCollapsed = useSelector(selectSidebarState);
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-
-  useEffect(() => {
-    // Load sidebar state from cookies
-    try {
-      const savedState = Cookies.get('sidebarCollapsed');
-      if (savedState !== null) {
-        setIsSidebarCollapsed(JSON.parse(savedState));
-      }
-    } catch (error) {
-      console.error('Error loading sidebar state:', error);
-    }
-  }, []);
 
   // Check if the current route is a public route (home, login, register, etc.)
   const isPublicRoute = pathname === '/' || pathname === '/auth/login' || pathname === '/auth/register';
@@ -68,7 +57,7 @@ const MainLayout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900 ease-in-out">
-      <Sidebar onToggle={(collapsed) => setIsSidebarCollapsed(collapsed)} />
+      <Sidebar />
       <div
         className="flex-1 flex flex-col transition-all duration-300 ease-in-out"
         style={{ marginLeft: isSidebarCollapsed ? '64px' : '224px' }}

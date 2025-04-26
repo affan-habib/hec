@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -10,7 +10,8 @@ import {
   FiPackage, FiSun
 } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
-import Cookies from 'js-cookie';
+import { useSelector, useDispatch } from 'react-redux';
+import { toggleSidebar, selectSidebarState } from '@/redux/slices/sidebarSlice';
 
 const menuItems = [
   {
@@ -68,40 +69,15 @@ const menuItems = [
   },
 ];
 
-const Sidebar = ({ onToggle }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = () => {
+  const isCollapsed = useSelector(selectSidebarState);
+  const dispatch = useDispatch();
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const pathname = usePathname();
   const { logout } = useAuth();
 
-  // Load sidebar state from cookies on component mount
-  useEffect(() => {
-    try {
-      const savedState = Cookies.get('sidebarCollapsed');
-      if (savedState !== null) {
-        const collapsed = JSON.parse(savedState);
-        setIsCollapsed(collapsed);
-      }
-    } catch (error) {
-      console.error('Error loading sidebar state:', error);
-    }
-  }, []);
-
-  // Save sidebar state to cookies when it changes and notify parent
-  useEffect(() => {
-    try {
-      Cookies.set('sidebarCollapsed', JSON.stringify(isCollapsed), { expires: 7 }); // Expires in 7 days
-    } catch (error) {
-      console.error('Error saving sidebar state:', error);
-    }
-  }, [isCollapsed]);
-
-  const toggleSidebar = () => {
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-    if (onToggle) {
-      onToggle(newState);
-    }
+  const handleToggleSidebar = () => {
+    dispatch(toggleSidebar());
   };
 
   const toggleSubmenu = (index) => {
@@ -131,7 +107,7 @@ const Sidebar = ({ onToggle }) => {
             null
           )}
           <button
-            onClick={toggleSidebar}
+            onClick={handleToggleSidebar}
             className="p-1 rounded-full hover:bg-gray-700 hover:text-yellow-400 transition-colors"
           >
             <FiMenu size={18} />
@@ -152,9 +128,11 @@ const Sidebar = ({ onToggle }) => {
                           : 'text-white hover:bg-gray-700 hover:text-yellow-400 hover:shadow-md hover:translate-x-1'
                         }`}
                     >
-                      <span className="mr-2">{item.icon}</span>
-                      {!isCollapsed && (
+                      {isCollapsed ? (
+                        <div className="w-full flex justify-center">{item.icon}</div>
+                      ) : (
                         <>
+                          <span className="mr-2">{item.icon}</span>
                           <span className="flex-1 text-left text-sm">{item.title}</span>
                           {openSubmenu === index ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
                         </>
@@ -183,8 +161,14 @@ const Sidebar = ({ onToggle }) => {
                         ? 'bg-yellow-500 text-black font-medium shadow-md'
                         : 'text-white hover:bg-gray-700 hover:text-yellow-400 hover:shadow-md hover:translate-x-1'
                       }`}>
-                      <span className="mr-2">{item.icon}</span>
-                      {!isCollapsed && <span className="text-sm">{item.title}</span>}
+                      {isCollapsed ? (
+                        <div className="w-full flex justify-center">{item.icon}</div>
+                      ) : (
+                        <>
+                          <span className="mr-2">{item.icon}</span>
+                          <span className="text-sm">{item.title}</span>
+                        </>
+                      )}
                     </span>
                   </Link>
                 )}
@@ -199,8 +183,14 @@ const Sidebar = ({ onToggle }) => {
             onClick={logout}
             className="w-full flex items-center py-2 px-2 rounded-md text-white hover:bg-gray-700 hover:text-yellow-400 hover:shadow-md hover:translate-x-1 transition-all duration-200"
           >
-            <span className="mr-2"><FiLogOut size={16} /></span>
-            {!isCollapsed && <span className="text-sm">Logout</span>}
+            {isCollapsed ? (
+              <div className="w-full flex justify-center"><FiLogOut size={16} /></div>
+            ) : (
+              <>
+                <span className="mr-2"><FiLogOut size={16} /></span>
+                <span className="text-sm">Logout</span>
+              </>
+            )}
           </button>
         </div>
       </div>
