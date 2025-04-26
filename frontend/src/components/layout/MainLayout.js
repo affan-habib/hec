@@ -1,41 +1,46 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useAuth } from '@/hooks/useAuth';
+import { hasRoutePermission, getUnauthorizedRedirect } from '@/utils/routePermissions';
 
 const MainLayout = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { user, loading } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     // Load sidebar state from localStorage
-    const savedState = localStorage.getItem('sidebarCollapsed');
-    if (savedState !== null) {
-      setIsSidebarCollapsed(JSON.parse(savedState));
-    }
-  }, []);
-
-  // Listen for sidebar state changes
-  useEffect(() => {
-    const handleStorageChange = () => {
+    try {
       const savedState = localStorage.getItem('sidebarCollapsed');
       if (savedState !== null) {
         setIsSidebarCollapsed(JSON.parse(savedState));
       }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    } catch (error) {
+      console.error('Error loading sidebar state:', error);
+    }
   }, []);
 
   // Check if the current route is a public route (home, login, register, etc.)
   const isPublicRoute = pathname === '/' || pathname === '/auth/login' || pathname === '/auth/register';
+
+  // Check route permissions
+  useEffect(() => {
+    if (!loading && user && !isPublicRoute) {
+      // Check if the user has permission to access the current route
+      const hasPermission = hasRoutePermission(pathname, user);
+
+      if (!hasPermission) {
+        // Redirect to the appropriate page based on user role
+        const redirectPath = getUnauthorizedRedirect(user);
+        router.replace(redirectPath);
+      }
+    }
+  }, [pathname, user, loading, router, isPublicRoute]);
 
   if (loading) {
     return (
@@ -61,7 +66,7 @@ const MainLayout = ({ children }) => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900 ease-in-out">
       <Sidebar onToggle={(collapsed) => setIsSidebarCollapsed(collapsed)} />
       <div
         className="flex-1 flex flex-col transition-all duration-300 ease-in-out"

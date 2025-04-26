@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiHome, FiUsers, FiBook, FiMessageSquare,
   FiAward, FiMessageCircle, FiImage, FiLayout,
   FiMenu, FiChevronDown, FiChevronRight, FiLogOut,
-  FiGrid, FiPackage
+  FiPackage
 } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -76,23 +75,32 @@ const Sidebar = ({ onToggle }) => {
 
   // Load sidebar state from localStorage on component mount
   useEffect(() => {
-    const savedState = localStorage.getItem('sidebarCollapsed');
-    if (savedState !== null) {
-      const collapsed = JSON.parse(savedState);
-      setIsCollapsed(collapsed);
-      if (onToggle) onToggle(collapsed);
+    try {
+      const savedState = localStorage.getItem('sidebarCollapsed');
+      if (savedState !== null) {
+        const collapsed = JSON.parse(savedState);
+        setIsCollapsed(collapsed);
+      }
+    } catch (error) {
+      console.error('Error loading sidebar state:', error);
     }
-  }, [onToggle]);
+  }, []);
 
-  // Save sidebar state to localStorage when it changes
+  // Save sidebar state to localStorage when it changes and notify parent
   useEffect(() => {
-    localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed));
-    // Notify parent component about the change
-    if (onToggle) onToggle(isCollapsed);
-  }, [isCollapsed, onToggle]);
+    try {
+      localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed));
+    } catch (error) {
+      console.error('Error saving sidebar state:', error);
+    }
+  }, [isCollapsed]);
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    if (onToggle) {
+      onToggle(newState);
+    }
   };
 
   const toggleSubmenu = (index) => {
@@ -108,23 +116,16 @@ const Sidebar = ({ onToggle }) => {
   };
 
   return (
-    <motion.div
+    <div
       className={`sidebar-container ${isCollapsed ? 'w-20' : 'w-64'} h-screen bg-gradient-to-b from-indigo-900 to-purple-900 text-white fixed left-0 top-0 transition-all duration-300 ease-in-out z-50`}
-      animate={{ width: isCollapsed ? 80 : 256 }}
-      transition={{ duration: 0.3 }}
     >
       <div className="flex flex-col h-full">
         {/* Sidebar Header */}
         <div className="p-4 border-b border-indigo-800 flex items-center justify-between">
           {!isCollapsed && (
-            <motion.h1
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-xl font-bold text-white"
-            >
+            <h1 className="text-xl font-bold text-white">
               헬로 잉글리시
-            </motion.h1>
+            </h1>
           )}
           <button
             onClick={toggleSidebar}
@@ -157,31 +158,23 @@ const Sidebar = ({ onToggle }) => {
                         </>
                       )}
                     </button>
-                    <AnimatePresence>
-                      {openSubmenu === index && !isCollapsed && (
-                        <motion.ul
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="pl-10 mt-1 space-y-1"
-                        >
-                          {item.submenuItems.map((subItem, subIndex) => (
-                            <li key={subIndex}>
-                              <Link href={subItem.path}>
-                                <span className={`block p-2 rounded-md transition-colors ${
-                                  isActive(subItem.path)
-                                    ? 'bg-indigo-700 text-white'
-                                    : 'text-gray-300 hover:bg-indigo-700 hover:text-white'
-                                }`}>
-                                  {subItem.title}
-                                </span>
-                              </Link>
-                            </li>
-                          ))}
-                        </motion.ul>
-                      )}
-                    </AnimatePresence>
+                    {openSubmenu === index && !isCollapsed && (
+                      <ul className="pl-10 mt-1 space-y-1">
+                        {item.submenuItems.map((subItem, subIndex) => (
+                          <li key={subIndex}>
+                            <Link href={subItem.path}>
+                              <span className={`block p-2 rounded-md transition-colors ${
+                                isActive(subItem.path)
+                                  ? 'bg-indigo-700 text-white'
+                                  : 'text-gray-300 hover:bg-indigo-700 hover:text-white'
+                              }`}>
+                                {subItem.title}
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ) : (
                   <Link href={item.path}>
@@ -211,7 +204,7 @@ const Sidebar = ({ onToggle }) => {
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
