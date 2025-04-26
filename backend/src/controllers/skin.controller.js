@@ -173,7 +173,7 @@ const updateSkin = async (req, res) => {
       });
     }
 
-    const updatedSkin = await Skin.update(parseInt(id), {
+    const updatedSkin = await Skin.updateById(parseInt(id), {
       name,
       description,
       theme_data,
@@ -189,6 +189,11 @@ const updateSkin = async (req, res) => {
     });
   } catch (error) {
     console.error('Update skin error:', error);
+    console.error('Error details:', {
+      id: req.params.id,
+      body: req.body,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
       message: 'Error updating skin',

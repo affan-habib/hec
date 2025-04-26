@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as Yup from 'yup';
 import { FiArrowLeft } from 'react-icons/fi';
+import React from 'react';
 import FormikForm from '@/components/forms/FormikForm';
 import skinService from '@/services/skinService';
 
 const EditSkinPage = ({ params }) => {
-  const { id } = params;
+  const unwrappedParams = React.use(params);
+  const { id } = unwrappedParams;
   const router = useRouter();
   const [skin, setSkin] = useState(null);
   const [error, setError] = useState('');
@@ -20,7 +22,7 @@ const EditSkinPage = ({ params }) => {
     const fetchSkin = async () => {
       try {
         const response = await skinService.getById(id);
-        
+
         if (response.success && response.data) {
           setSkin(response.data);
         } else {
@@ -49,7 +51,7 @@ const EditSkinPage = ({ params }) => {
 
     try {
       const response = await skinService.update(id, values);
-      
+
       if (response.success) {
         router.push(`/admin/skins/${id}`);
       } else {

@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import React from 'react';
 import SkinBuilder from '@/components/skin-builder/SkinBuilder';
 import skinService from '@/services/skinService';
 
 const SkinBuilderPage = ({ params }) => {
-  const { id } = params;
+  const unwrappedParams = React.use(params);
+  const { id } = unwrappedParams;
   const router = useRouter();
   const [skin, setSkin] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,9 +18,22 @@ const SkinBuilderPage = ({ params }) => {
     const fetchSkin = async () => {
       try {
         const response = await skinService.getById(id);
-        
-        if (response.success && response.data && response.data.skin) {
-          setSkin(response.data.skin);
+
+        if (response.success && response.data) {
+          // Handle different response formats
+          const skinData = response.data.skin || response.data;
+
+          // Ensure theme_data is properly formatted
+          if (skinData.theme_data && typeof skinData.theme_data === 'string') {
+            try {
+              skinData.theme_data = JSON.parse(skinData.theme_data);
+            } catch (parseError) {
+              console.error('Error parsing theme_data:', parseError);
+              // Keep as string, the SkinBuilder component will handle it
+            }
+          }
+
+          setSkin(skinData);
         } else {
           setError('Failed to load skin data. Please try again.');
         }
@@ -35,10 +50,38 @@ const SkinBuilderPage = ({ params }) => {
 
   const handleSave = async (themeData) => {
     try {
-      const response = await skinService.update(id, {
-        theme_data: themeData
+      // Ensure we have a valid theme_data object or string
+      let formattedThemeData;
+
+      if (typeof themeData === 'object') {
+        // If it's an object, stringify it
+        formattedThemeData = JSON.stringify(themeData);
+      } else if (typeof themeData === 'string') {
+        // If it's already a string, make sure it's valid JSON
+        try {
+          // Try to parse and re-stringify to ensure valid JSON
+          const parsed = JSON.parse(themeData);
+          formattedThemeData = JSON.stringify(parsed);
+        } catch (e) {
+          // If parsing fails, use as is
+          formattedThemeData = themeData;
+        }
+      } else {
+        // For any other type, convert to string
+        formattedThemeData = String(themeData);
+      }
+
+      console.log('Saving theme data:', {
+        id,
+        themeDataType: typeof themeData,
+        formattedDataType: typeof formattedThemeData,
+        formattedDataLength: formattedThemeData.length
       });
-      
+
+      const response = await skinService.update(id, {
+        theme_data: formattedThemeData
+      });
+
       if (response.success) {
         return true;
       } else {
@@ -104,10 +147,10 @@ const SkinBuilderPage = ({ params }) => {
   }
 
   return (
-    <SkinBuilder 
-      skin={skin} 
-      onSave={handleSave} 
-      onExit={handleExit} 
+    <SkinBuilder
+      skin={skin}
+      onSave={handleSave}
+      onExit={handleExit}
     />
   );
 };

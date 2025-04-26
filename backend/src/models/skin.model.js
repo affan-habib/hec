@@ -60,19 +60,63 @@ module.exports = (sequelize, DataTypes) => {
         const rawValue = this.getDataValue('theme_data');
         if (rawValue) {
           try {
-            return JSON.parse(rawValue);
+            // Check if it's already a JSON string
+            if (typeof rawValue === 'string') {
+              // Try to parse it as JSON
+              return JSON.parse(rawValue);
+            }
+            // If it's already an object, return it as is
+            return rawValue;
           } catch (error) {
             console.error('Error parsing theme_data:', error);
+            // Return the raw value if parsing fails
             return rawValue;
           }
         }
-        return null;
+        // Return default empty theme data if null
+        return {
+          version: 1,
+          elements: [],
+          background: {
+            color: '#ffffff',
+            image: null
+          },
+          dimensions: {
+            width: 800,
+            height: 600
+          }
+        };
       },
       set(value) {
-        if (typeof value === 'object') {
-          this.setDataValue('theme_data', JSON.stringify(value));
-        } else {
-          this.setDataValue('theme_data', value);
+        try {
+          // If it's an object, stringify it
+          if (typeof value === 'object') {
+            this.setDataValue('theme_data', JSON.stringify(value));
+          }
+          // If it's already a string, check if it's valid JSON
+          else if (typeof value === 'string') {
+            // Try to parse and re-stringify to ensure valid JSON
+            try {
+              const parsed = JSON.parse(value);
+              this.setDataValue('theme_data', JSON.stringify(parsed));
+            } catch (e) {
+              // If parsing fails, store as is (might be a simple string)
+              this.setDataValue('theme_data', value);
+            }
+          }
+          // For any other type, convert to string
+          else {
+            this.setDataValue('theme_data', String(value));
+          }
+        } catch (error) {
+          console.error('Error setting theme_data:', error);
+          // Set a default value if all else fails
+          this.setDataValue('theme_data', JSON.stringify({
+            version: 1,
+            elements: [],
+            background: { color: '#ffffff', image: null },
+            dimensions: { width: 800, height: 600 }
+          }));
         }
       }
     },
@@ -164,8 +208,8 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  Skin.update = async (id, data) => {
-    await Skin.update(data, { where: { id } });
+  Skin.updateById = async (id, data) => {
+    await sequelize.models.Skin.update(data, { where: { id } });
     return await Skin.findById(id);
   };
 

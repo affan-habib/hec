@@ -70,15 +70,12 @@ const MainLayout = ({ children }) => {
       <Sidebar onToggle={(collapsed) => setIsSidebarCollapsed(collapsed)} />
       <div
         className="flex-1 flex flex-col transition-all duration-300 ease-in-out"
-        style={{ marginLeft: isSidebarCollapsed ? '80px' : '256px' }}
+        style={{ marginLeft: isSidebarCollapsed ? '64px' : '224px' }}
       >
         <Header />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
-        <footer className="py-4 px-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>© {new Date().getFullYear()} Hello English Coaching Admin. All rights reserved.</p>
-        </footer>
       </div>
     </div>
   );

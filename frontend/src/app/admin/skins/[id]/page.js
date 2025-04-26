@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FiArrowLeft, FiEdit, FiTrash2, FiEye, FiGlobe, FiLock } from 'react-icons/fi';
 import { motion } from 'framer-motion';
+import React from 'react';
 import skinService from '@/services/skinService';
+import SkinPreview from '@/components/skin-preview/SkinPreview';
 
 const SkinDetailPage = ({ params }) => {
-  const { id } = params;
+  const unwrappedParams = React.use(params);
+  const { id } = unwrappedParams;
   const router = useRouter();
   const [skin, setSkin] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,7 +22,7 @@ const SkinDetailPage = ({ params }) => {
     const fetchSkin = async () => {
       try {
         const response = await skinService.getById(id);
-        
+
         if (response.success && response.data) {
           setSkin(response.data);
         } else {
@@ -39,7 +42,7 @@ const SkinDetailPage = ({ params }) => {
   const handleDelete = async () => {
     try {
       const response = await skinService.delete(id);
-      
+
       if (response.success) {
         router.push('/admin/skins');
       } else {
@@ -237,16 +240,16 @@ const SkinDetailPage = ({ params }) => {
           </div>
           <div className="border-t border-gray-200 dark:border-gray-700 p-6">
             <div className="aspect-w-16 aspect-h-9 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-              {/* This would be a preview of the skin */}
               <div className="w-full h-full flex items-center justify-center">
                 {skin.theme_data ? (
                   <div className="w-full h-full p-4 overflow-hidden">
-                    {/* Render a simplified version of the skin here */}
-                    <div className="text-center">
-                      <p className="text-gray-500 dark:text-gray-400">
-                        Preview will be displayed here. Open the builder to edit the skin.
-                      </p>
-                    </div>
+                    {/* Render the skin preview */}
+                    <SkinPreview
+                      themeData={skin.theme_data}
+                      scale={0.5}
+                      width="100%"
+                      height="100%"
+                    />
                   </div>
                 ) : (
                   <div className="text-center">

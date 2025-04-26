@@ -5,6 +5,7 @@ import { FiPlus, FiSearch, FiFilter, FiRefreshCw } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import skinService from '@/services/skinService';
+import SkinPreview from '@/components/skin-preview/SkinPreview';
 
 const SkinsPage = () => {
   const [skins, setSkins] = useState([]);
@@ -201,13 +202,24 @@ const SkinsPage = () => {
                     className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden shadow cursor-pointer"
                   >
                     <div className="aspect-w-16 aspect-h-9 bg-gray-200 dark:bg-gray-600">
-                      {/* Skin Preview - This would ideally be a thumbnail of the skin */}
+                      {/* Skin Preview */}
                       <div className="w-full h-full flex items-center justify-center">
-                        <div className="text-center p-4">
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
-                            {skin.name.charAt(0).toUpperCase()}
+                        {skin.theme_data ? (
+                          <div className="w-full h-full p-2 overflow-hidden">
+                            <SkinPreview
+                              themeData={skin.theme_data}
+                              scale={0.3}
+                              width="100%"
+                              height="100%"
+                            />
                           </div>
-                        </div>
+                        ) : (
+                          <div className="text-center p-4">
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                              {skin.name.charAt(0).toUpperCase()}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="p-4">

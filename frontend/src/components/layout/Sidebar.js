@@ -7,19 +7,19 @@ import {
   FiHome, FiUsers, FiBook, FiMessageSquare,
   FiAward, FiMessageCircle, FiImage, FiLayout,
   FiMenu, FiChevronDown, FiChevronRight, FiLogOut,
-  FiPackage
+  FiPackage, FiSun
 } from 'react-icons/fi';
 import { useAuth } from '@/hooks/useAuth';
 
 const menuItems = [
   {
     title: 'Dashboard',
-    icon: <FiHome size={20} />,
+    icon: <FiHome size={16} />,
     path: '/admin/dashboard',
   },
   {
     title: 'Users',
-    icon: <FiUsers size={20} />,
+    icon: <FiUsers size={16} />,
     submenu: true,
     submenuItems: [
       { title: 'Students', path: '/admin/students' },
@@ -28,27 +28,27 @@ const menuItems = [
   },
   {
     title: 'Diaries',
-    icon: <FiBook size={20} />,
+    icon: <FiBook size={16} />,
     path: '/admin/diaries',
   },
   {
     title: 'Chats',
-    icon: <FiMessageSquare size={20} />,
+    icon: <FiMessageSquare size={16} />,
     path: '/admin/chats',
   },
   {
     title: 'Awards',
-    icon: <FiAward size={20} />,
+    icon: <FiAward size={16} />,
     path: '/admin/awards',
   },
   {
     title: 'Forums',
-    icon: <FiMessageCircle size={20} />,
+    icon: <FiMessageCircle size={16} />,
     path: '/admin/forums',
   },
   {
     title: 'Assets',
-    icon: <FiPackage size={20} />,
+    icon: <FiPackage size={16} />,
     submenu: true,
     submenuItems: [
       { title: 'Asset Categories', path: '/admin/asset-categories' },
@@ -57,12 +57,12 @@ const menuItems = [
   },
   {
     title: 'Skins',
-    icon: <FiLayout size={20} />,
+    icon: <FiLayout size={16} />,
     path: '/admin/skins',
   },
   {
     title: 'Images',
-    icon: <FiImage size={20} />,
+    icon: <FiImage size={16} />,
     path: '/admin/images',
   },
 ];
@@ -117,57 +117,57 @@ const Sidebar = ({ onToggle }) => {
 
   return (
     <div
-      className={`sidebar-container ${isCollapsed ? 'w-20' : 'w-64'} h-screen bg-gradient-to-b from-indigo-900 to-purple-900 text-white fixed left-0 top-0 transition-all duration-300 ease-in-out z-50`}
+      className={`sidebar-container ${isCollapsed ? 'w-16' : 'w-56'} h-screen bg-gradient-to-b from-gray-800 to-black text-white fixed left-0 top-0 transition-all duration-300 ease-in-out z-50 shadow-lg`}
     >
       <div className="flex flex-col h-full">
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-indigo-800 flex items-center justify-between">
-          {!isCollapsed && (
-            <h1 className="text-xl font-bold text-white">
+        <div className="py-5 px-4 border-b border-gray-700 flex items-center justify-between">
+          {!isCollapsed ? (
+            <h1 className="text-sm font-bold text-white">
               헬로 잉글리시
             </h1>
+          ) : (
+            null
           )}
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-full hover:bg-indigo-800 transition-colors"
+            className="p-1 rounded-full hover:bg-gray-700 hover:text-yellow-400 transition-colors"
           >
-            <FiMenu size={24} />
+            <FiMenu size={18} />
           </button>
         </div>
 
         {/* Menu Items */}
-        <div className="flex-1 overflow-y-auto py-4 scrollbar-thin scrollbar-thumb-indigo-700 scrollbar-track-transparent">
-          <ul className="space-y-2 px-2">
+        <div className="flex-1 overflow-y-auto py-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+          <ul className="space-y-1 px-2">
             {menuItems.map((item, index) => (
               <li key={index}>
                 {item.submenu ? (
                   <div>
                     <button
                       onClick={() => toggleSubmenu(index)}
-                      className={`w-full flex items-center p-3 rounded-lg transition-colors ${
-                        isSubmenuActive(item.submenuItems)
-                          ? 'bg-indigo-800 text-white'
-                          : 'text-gray-300 hover:bg-indigo-800 hover:text-white'
-                      }`}
+                      className={`w-full flex items-center py-2 px-2 rounded-md transition-all duration-200 ${isSubmenuActive(item.submenuItems)
+                          ? 'bg-yellow-500 text-black font-medium shadow-md'
+                          : 'text-white hover:bg-gray-700 hover:text-yellow-400 hover:shadow-md hover:translate-x-1'
+                        }`}
                     >
-                      <span className="mr-3">{item.icon}</span>
+                      <span className="mr-2">{item.icon}</span>
                       {!isCollapsed && (
                         <>
-                          <span className="flex-1 text-left">{item.title}</span>
-                          {openSubmenu === index ? <FiChevronDown /> : <FiChevronRight />}
+                          <span className="flex-1 text-left text-sm">{item.title}</span>
+                          {openSubmenu === index ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
                         </>
                       )}
                     </button>
                     {openSubmenu === index && !isCollapsed && (
-                      <ul className="pl-10 mt-1 space-y-1">
+                      <ul className="pl-8 mt-1 space-y-1">
                         {item.submenuItems.map((subItem, subIndex) => (
                           <li key={subIndex}>
                             <Link href={subItem.path}>
-                              <span className={`block p-2 rounded-md transition-colors ${
-                                isActive(subItem.path)
-                                  ? 'bg-indigo-700 text-white'
-                                  : 'text-gray-300 hover:bg-indigo-700 hover:text-white'
-                              }`}>
+                              <span className={`block py-1 px-2 rounded-md transition-all duration-200 text-xs ${isActive(subItem.path)
+                                  ? 'bg-yellow-500 text-black font-medium shadow-sm'
+                                  : 'text-gray-300 hover:bg-gray-700 hover:text-yellow-400 hover:shadow-sm hover:translate-x-1'
+                                }`}>
                                 {subItem.title}
                               </span>
                             </Link>
@@ -178,13 +178,12 @@ const Sidebar = ({ onToggle }) => {
                   </div>
                 ) : (
                   <Link href={item.path}>
-                    <span className={`flex items-center p-3 rounded-lg transition-colors ${
-                      isActive(item.path)
-                        ? 'bg-indigo-800 text-white'
-                        : 'text-gray-300 hover:bg-indigo-800 hover:text-white'
-                    }`}>
-                      <span className="mr-3">{item.icon}</span>
-                      {!isCollapsed && <span>{item.title}</span>}
+                    <span className={`flex items-center py-2 px-2 rounded-md transition-all duration-200 ${isActive(item.path)
+                        ? 'bg-yellow-500 text-black font-medium shadow-md'
+                        : 'text-white hover:bg-gray-700 hover:text-yellow-400 hover:shadow-md hover:translate-x-1'
+                      }`}>
+                      <span className="mr-2">{item.icon}</span>
+                      {!isCollapsed && <span className="text-sm">{item.title}</span>}
                     </span>
                   </Link>
                 )}
@@ -194,13 +193,13 @@ const Sidebar = ({ onToggle }) => {
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-indigo-800">
+        <div className="py-2 px-3 border-t border-gray-700">
           <button
             onClick={logout}
-            className="w-full flex items-center p-3 rounded-lg text-gray-300 hover:bg-indigo-800 hover:text-white transition-colors"
+            className="w-full flex items-center py-2 px-2 rounded-md text-white hover:bg-gray-700 hover:text-yellow-400 hover:shadow-md hover:translate-x-1 transition-all duration-200"
           >
-            <span className="mr-3"><FiLogOut size={20} /></span>
-            {!isCollapsed && <span>Logout</span>}
+            <span className="mr-2"><FiLogOut size={16} /></span>
+            {!isCollapsed && <span className="text-sm">Logout</span>}
           </button>
         </div>
       </div>

@@ -12,18 +12,53 @@ import assetService from '@/services/assetService';
 import assetCategoryService from '@/services/assetCategoryService';
 
 const SkinBuilder = ({ skin, onSave, onExit }) => {
-  const [themeData, setThemeData] = useState(skin.theme_data || {
-    version: 1,
-    elements: [],
-    background: {
-      color: '#ffffff',
-      image: null
-    },
-    dimensions: {
-      width: 800,
-      height: 600
+  // Parse theme_data if it's a string, or use default structure if not available
+  const parseThemeData = () => {
+    const defaultThemeData = {
+      version: 1,
+      elements: [],
+      background: {
+        color: '#ffffff',
+        image: null
+      },
+      dimensions: {
+        width: 800,
+        height: 600
+      }
+    };
+
+    if (!skin || !skin.theme_data) {
+      return defaultThemeData;
     }
-  });
+
+    // If theme_data is a string, try to parse it
+    if (typeof skin.theme_data === 'string') {
+      try {
+        return JSON.parse(skin.theme_data);
+      } catch (error) {
+        console.error('Error parsing theme_data:', error);
+        return defaultThemeData;
+      }
+    }
+
+    // If theme_data is already an object, ensure it has all required properties
+    const themeData = skin.theme_data;
+
+    return {
+      version: themeData.version || 1,
+      elements: Array.isArray(themeData.elements) ? themeData.elements : [],
+      background: {
+        color: themeData.background?.color || '#ffffff',
+        image: themeData.background?.image || null
+      },
+      dimensions: {
+        width: themeData.dimensions?.width || 800,
+        height: themeData.dimensions?.height || 600
+      }
+    };
+  };
+
+  const [themeData, setThemeData] = useState(parseThemeData());
 
   const [selectedElement, setSelectedElement] = useState(null);
   const [activePanel, setActivePanel] = useState('assets'); // 'assets', 'text', 'properties'
@@ -106,13 +141,13 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
       position: { x: 50, y: 50 },
       size: { width: 200, height: 200 },
       rotation: 0,
-      zIndex: themeData.elements.length + 1,
+      zIndex: (themeData?.elements?.length || 0) + 1,
       assetId: asset.id
     };
 
     setThemeData({
       ...themeData,
-      elements: [...themeData.elements, newElement]
+      elements: [...(themeData?.elements || []), newElement]
     });
 
     setSelectedElement(newElement);
@@ -127,7 +162,7 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
       position: { x: 50, y: 50 },
       size: { width: 200, height: 50 },
       rotation: 0,
-      zIndex: themeData.elements.length + 1,
+      zIndex: (themeData?.elements?.length || 0) + 1,
       style: style || {
         fontFamily: 'Arial',
         fontSize: '16px',
@@ -139,7 +174,7 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
 
     setThemeData({
       ...themeData,
-      elements: [...themeData.elements, newElement]
+      elements: [...(themeData?.elements || []), newElement]
     });
 
     setSelectedElement(newElement);
@@ -149,7 +184,7 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
   const handleUpdateElement = (id, properties) => {
     setThemeData({
       ...themeData,
-      elements: themeData.elements.map(element =>
+      elements: (themeData?.elements || []).map(element =>
         element.id === id ? { ...element, ...properties } : element
       )
     });
@@ -165,7 +200,7 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
 
     setThemeData({
       ...themeData,
-      elements: themeData.elements.filter(element => element.id !== selectedElement.id)
+      elements: (themeData?.elements || []).filter(element => element.id !== selectedElement.id)
     });
 
     setSelectedElement(null);
@@ -175,13 +210,13 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
   const handleUpdateBackground = (background) => {
     setThemeData({
       ...themeData,
-      background: { ...themeData.background, ...background }
+      background: { ...(themeData?.background || {}), ...background }
     });
   };
 
   // Handle element selection
   const handleSelectElement = (elementId) => {
-    const element = themeData.elements.find(el => el.id === elementId);
+    const element = (themeData?.elements || []).find(el => el.id === elementId);
     setSelectedElement(element || null);
 
     if (element) {
@@ -191,7 +226,7 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
 
   // Handle element movement
   const handleElementMove = (id, delta) => {
-    const element = themeData.elements.find(el => el.id === id);
+    const element = (themeData?.elements || []).find(el => el.id === id);
     if (!element) return;
 
     const newPosition = {
@@ -219,7 +254,7 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
         {/* Sidebar Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Skin Builder</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{skin.name}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{skin?.name || 'New Skin'}</p>
         </div>
 
         {/* Sidebar Tabs */}
@@ -285,7 +320,7 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
               selectedElement={selectedElement}
               onUpdateElement={handleUpdateElement}
               onUpdateBackground={handleUpdateBackground}
-              background={themeData.background}
+              background={themeData?.background || { color: '#ffffff', image: null }}
               onDeleteElement={handleDeleteElement}
             />
           )}
@@ -347,17 +382,17 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
           ref={canvasRef}
           className="relative bg-white shadow-lg"
           style={{
-            width: `${themeData.dimensions.width}px`,
-            height: `${themeData.dimensions.height}px`,
-            backgroundColor: themeData.background.color || '#ffffff',
-            backgroundImage: themeData.background.image ? `url(${themeData.background.image})` : 'none',
+            width: `${themeData?.dimensions?.width || 800}px`,
+            height: `${themeData?.dimensions?.height || 600}px`,
+            backgroundColor: themeData?.background?.color || '#ffffff',
+            backgroundImage: themeData?.background?.image ? `url(${themeData.background.image})` : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             overflow: 'hidden'
           }}
         >
           {/* Render elements */}
-          {themeData.elements.map((element) => (
+          {(themeData?.elements || []).map((element) => (
             <div
               key={element.id}
               className="absolute"
@@ -416,7 +451,7 @@ const SkinBuilder = ({ skin, onSave, onExit }) => {
               rotatable={true}
               snappable={true}
               snapCenter={true}
-              bounds={{ left: 0, top: 0, right: themeData.dimensions.width, bottom: themeData.dimensions.height }}
+              bounds={{ left: 0, top: 0, right: themeData?.dimensions?.width || 800, bottom: themeData?.dimensions?.height || 600 }}
               onDrag={({ target, delta }) => {
                 handleElementMove(selectedElement.id, delta);
               }}
