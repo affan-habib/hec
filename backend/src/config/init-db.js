@@ -17,7 +17,7 @@ const initDatabase = async () => {
     const adminPassword = await bcrypt.hash('admin123', salt);
 
     const admin = await db.User.create({
-      email: 'admin@helloenlishcoaching.com',
+      email: 'admin@helloenglishcoaching.com',
       password: adminPassword,
       first_name: 'Admin',
       last_name: 'User',
